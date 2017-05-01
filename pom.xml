@@ -8,7 +8,7 @@
 	<url>http://maven.apache.org</url>
 
 	<parent>
-		<groupId>pw.cdmi.core</groupId>
+		<groupId>pw.cdmi</groupId>
 		<artifactId>cdmi-parent</artifactId>
 		<version>3.0.1-SNAPSHOT</version>
 		<relativePath>../cdmi-parent/pom.xml</relativePath>
@@ -326,4 +326,6 @@
 			</plugin>
 		</plugins>
 	</build>
+	<groupId>pw.cdmi.core</groupId>
+	<version>3.0.1-SNAPSHOT</version>
 </project>
