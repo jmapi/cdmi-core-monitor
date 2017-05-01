@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+  <head>
+<!--
+ *
+ * (C) Copyright IBM Corp. 2006, 2010
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Alexander Wolf-Reber, IBM, a.wolf-reber@de.ibm.com
+ *
+ * Change History
+ * Flag       Date        Prog         Description
+ *-------------------------------------------------------------------------------
+ * 2003590    2008-06-30  blaschke-oss Change licensing from CPL to EPL
+ * 2799260    2009-06-01  raman_arora  Fix left over @author tag from Java5 upgrade
+ * 2946113    2010-02-08  blaschke-oss First steps code snippet has compile errors
+ * 2972697    2010-03-18  blaschke-oss Fix spelling errors in HTML files
+ * 2990370    2010-04-22  blaschke-oss Development/unittest HTML out of date
+-->
+  </head>
+  <body style="background-color: white;">
+
+    <h1>The discovery package</h1>
+    <p>The <code>org.sblim.cimclient.discovery</code> package offers high-level discovery functions for WBEM services. The design point behind it was to provide 
+    an API that is protocol agnostic and hides the nasty details of the discovery protocol and the advertisement format.</p>
+    <p>With the following code snippet you can discover all WBEM services using the SLP DA "da.foo.net":</p>
+
+    <div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+      <div style="background-color: #f0f0f0; padding: 10px;">
+<pre>
+String[] directoryAgents = new String[] {"da.foo.net"};
+Discoverer discoverer = DiscovererFactory.getDiscoverer(DiscovererFactory.SLP);
+WBEMServiceAdvertisement[] advertisements = discoverer.findWbemServices(directoryAgents);
+</pre>
+      </div>
+    </div>
+    
+    <p>The factory pattern allows support for discovery protocols other than SLP in the future. However, SLP is the only supported one today. The <code>WBEMServiceAdvertisement</code> 
+    interface provides the means to easily retrieve all the information from the WBEM template:</p>
+    
+    <div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+      <div style="background-color: #f0f0f0; padding: 10px;">
+<pre>
+String url = advertisements[0].getServiceUrl();
+String id = advertisements[0].getServiceId();
+String[] ns = advertisements[0].getInteropNamespaces();
+String name = advertisements[0].getAttribute(WBEMServiceAdvertisement.SERVICE_HI_NAME);
+</pre>
+      </div>
+    </div>
+    
+      <p>You may also create a <code>WBEMClient</code> directly from the <code>WBEMServiceAdvertisement</code>:</p>
+    
+    <div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+      <div style="background-color: #f0f0f0; padding: 10px;">
+<pre>
+Subject subject = new Subject(); // in real life you would need real credentials ... of course
+WBEMClient client = advertisements[0].createClient(subject, Locale.getAvailableLocales());
+</pre>
+      </div>
+    </div>
+    <p>Last but not least we have the <code>AdvertisementCatalog</code> class. It helps managing the discovered advertisements by addressing common issues:</p>
+    <ul>
+      <li>The same service registers with multiple URLs (e.g. for HTTP and HTTPS) and/or multiple directories. The <code>AdvertisementCatalog</code> groups advertisements 
+      by service-id and lets you select the appropriate one by your protocol preference.</li>
+      <div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+        <div style="background-color: #f0f0f0; padding: 10px;">
+<pre>
+WBEMProtocol[] protocols = new WBEMProtocol[3];
+protocols[0] = new WBEMProtocol("https", "cim-xml");
+protocols[2] = new WBEMProtocol("http", "cim-xml");
+
+String[] directoryAgents = new String[] {"da.foo.net"};
+Discoverer discoverer = DiscovererFactory.getDiscoverer(DiscovererFactory.SLP);
+WBEMServiceAdvertisement[] advertisements = discoverer.findWbemServices(directoryAgents);
+AdvertisementCatalog catalog = new AdvertisementCatalog();
+catalog.addAdvertisements(advertisements);
+
+String[] ids = catalog.getKnownIds();
+for(String id : ids) {
+   WBEMServiceAdvertisement adv = catalog.getAdvertisement(id, protocols);
+   WBEMClient client = adv.createClient(subject, Locale.getAvailableLocales());
+}
+</pre>
+        </div>
+      </div>
+      <li>The list of advertisements changes over time, items appear and disappear. The <code>AdvertisementCatalog</code> offers listener interfaces which are notified when 
+      items are added, removed, expired or renewed.</p>
+
+      <div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+        <div style="background-color: #f0f0f0; padding: 10px;">
+<pre>
+AdvertisementCatalog cat = new AdvertisementCatalog();
+final AdvertisementCatalog.EventListener listener = 
+  new AdvertisementCatalog.EventListener() {
+    public void advertisementEvent(int pEvent, WBEMServiceAdvertisement pAdvertisment) {
+      switch (pEvent) {
+        case AdvertisementCatalog.EVENT_ADD:
+             /* handle event */
+             break;
+        case AdvertisementCatalog.EVENT_REMOVE:
+             /* handle event */
+             break;
+        case AdvertisementCatalog.EVENT_EXPIRE:
+             /* handle event */
+             break;
+        case AdvertisementCatalog.EVENT_RENEW:
+              /* handle event */
+              break;
+        default:
+      }
+    }
+  };
+catalog.addEventListener(listener);
+Discoverer dsc = DiscovererFactory.getDiscoverer(DiscovererFactory.SLP);
+...
+String[] directoryAgents = new String[] {"da.foo.net"};
+WBEMServiceAdvertisement[] advs = dsc.findWbemServices(directoryAgents);
+cat.refreshAdvertisements(directoryAgents, advs);
+</pre>
+        </div>
+      </div>
+    </ul>
+      
+
+
+  </body>
+</html>
+
+

@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+  <head>
+<!--
+ *
+ * (C) Copyright IBM Corp. 2006, 2010
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Alexander Wolf-Reber, IBM, a.wolf-reber@de.ibm.com
+ *
+ * Change History
+ * Flag       Date        Prog         Description
+ *-------------------------------------------------------------------------------
+ * 2003590    2008-06-30  blaschke-oss Change licensing from CPL to EPL
+ * 2799260    2009-06-01  raman_arora  Fix left over @author tag from Java5 upgrade
+ * 2882448    2009-10-21  blaschke-oss Add WBEMClientConstants from JSR48
+ * 2946113    2010-02-08  blaschke-oss First steps code snippet has compile errors
+ * 2972697    2010-03-18  blaschke-oss Fix spelling errors in HTML files
+ * 2990370    2010-04-22  blaschke-oss Development/unittest HTML out of date
+-->
+  </head>
+  <body style="background-color: white;">
+
+    <h1>Best practices</h1>
+    
+    <h2>Always close iterators</h2>
+    <p>Enumeration and association traversal operations return a CloseableIterator. Make sure that this iterator always gets closed. In current
+       implementations the iterator is closed automatically when you iterate beyond the last element. However there's no guarantee whatsoever
+       that this behavior is kept for future releases. Moreover you have to ensure that the iterator is closed when you stop iterating before
+       the end is reached either normally or caused by an exception.</p>
+    <p>If you fail to close the iterator the client will leak a network socket.</p> 
+
+    <div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+      <div style="background-color: #f0f0f0; padding: 10px;">
+       <pre>
+			
+  final CloseableIterator&lt;CIMObjectPath&gt; iterator = client.enumerateInstanceNames(new CIMObjectPath(
+    "CIM_RegisteredProfile", "root/cimv2"));
+  try {
+    while (iterator.hasNext()) {
+      final CIMObjectPath path = iterator.next();
+      System.out.println(path.toString());
+    }
+  } finally {
+    iterator.close();
+  }
+        </pre>
+      </div>
+    </div>
+
+
+    <h2>Sharing vs pooling of WBEMClients</h2>
+    <p>The WBEMClient class is designed for thread-safety. It contains an HTTP client pool that allows the reuse of network connections used for
+       previous operations. You are able to set configuration properties that apply to the current thread only.</p>
+    <p>Bottom line: we did a lot of work to ensure that sharing a WBEMClient between threads is safe and convenient to use. Therefore create 
+       just one WBEMClient per CIMOM and share it. There isn't a compelling reason for having a pool of multiple clients per CIMOM - this is
+       a pattern used with other client libraries that had not been thread-safe.</p>
+       
+    <h2>Choose the right parser</h2>
+    <p>The SBLIM CIM Client for Java offers three different XML parsers: DOM, SAX and PULL. All three produce identical results out of a CIM-XML 
+       response. What is different is <em>the way</em> they are producing these results.</p>
+       <ul>
+       <li><p>The <b>DOM parser</b> produces a DOM structure out of the CIM-XML. This is quite convenient to debug, but consumes by far the most memory and is 
+       also the slowest approach.</p></li>
+       <li><p>The <b>SAX parser</b> creates Java CIM objects (javax.cim.*) directly without building a DOM structure first. That saves memory and is much faster. 
+       The SAX parser is also the default parser.</p></li>
+       <li><p>The <b>PULL parser</b> is based on the SAX code. But instead of parsing the whole CIM-XML response in one step, it just parses as much XML as
+       needed to create the next Java CIM object. With every call to Iterator.next() by the application another chunk of the response is parsed.</p>
+       <p>The SBLIM CIM Client for Java throttles the HTTP stream so that the CIMOM does not send us parts of the response we do not need yet. This
+       throttling has caused problems with a view CIMOMs in the past and because of this the client does not use the PULL parser as default. However the
+       PULL parser has the least memory consumption and what's more important the memory footprint is independent of the size of the response. It
+       is overall a bit slower than the SAX parser, but returns the first object much faster.</p>
+       <p><b>NOTE:</b>Because pulled enumeration operations include required information at the very end of the CIMOM's CIM-XML response, 
+       the whole CIM-XML response in parsed in one step even if the PULL parser is in effect.</p></li>
+       </ul>
+       <p>Bottom line: when you are dealing with large numbers of objects and your CIMOM works with the PULL parser ... choose the PULL parser. For all
+       other cases SAX is the first choice. DOM shouldn't be used in a production environment.</p>
+    
+    <h2>Restrain tracing for problem determination</h2>
+    <p>The SBLIM CIM Client for Java can produce a lot of trace data. That's nice during your application development or when you have to analyze a 
+       problem at a customer site. It's wasting performance and capacity if tracing runs in a healthy production system.</p>
+    <p>Traces are much bigger than logs. This data has to be written, and that comes at a cost of performance. The trace code analyzes the stack trace on
+       every message that is written. That eats up performance too.</p>
+    <p>Bottom line: tracing is convenient for problem determination, but nothing suitable for a healthy production environment. So do not ship your
+       product with tracing configured by default.</p>
+    
+    <h2>Have a look at the configuration options</h2>
+    <p>The SBLIM CIM Client for Java has a good number of configuration options. Probably you can live with the chosen defaults most of the
+       time. But have a look first. There are some options you cannot find a good default for, e.g. the HTTP timeout - zero is the default, which
+       means that the client will never timeout while waiting on a CIMOM response. That might not be what you want.</p>
+    
+    <h2>OpenPegasus local authentication</h2>
+    <p>The SBLIM CIM Client for Java supports the local authentication mechanism of OpenPegasus. In order to use it you have to set a configuration 
+       property:
+    <div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+      <div style="background-color: #f0f0f0; padding: 10px;">
+       <pre>
+...
+final Subject subject = new Subject();
+subject.getPrincipals().add(new UserPrincipal("root"));
+WBEMClientSBLIM client = (WBEMClientSBLIM) WBEMClientFactory.getClient(WBEMClientConstants.PROTOCOL_CIMXML);
+client.setProperty(WBEMConfigurationProperties.HTTP_AUTHENTICATION_MODULE, PegasusLocalAuthInfo.class.getName());
+client.initialize(path, subject, new Locale[] { Locale.US });
+...
+        </pre>
+      </div>
+    </div>
+    <p>With this property you specify the authentication module to be used. The client ships two modules:
+    <ul>
+       <li><code>org.sblim.cimclient.internal.http.WwwAuthInfo</code>: Usual basic and digest HTTP authentication. User & password 
+            or certificate required.</li>
+       <li><code>org.sblim.cimclient.internal.http.PegasusLocalAuthInfo</code>: OpenPegasus local authentication. Only username required.</li>
+    </ul>
+    <p>You might also create your own module by subclassing <code>org.sblim.cimclient.internal.http.AuthInfo</code>. Keep in mind this is
+       "internal" API, so it might be subject to change.</p>
+       
+    <h2>Object Paths</h2>
+    <p>An object path has the general form of <code>[scheme:host:port//]namespace:[classname[.key=value]*]</code>. The client distinguishes three types of object paths:</p>
+    <ul>
+      <li>Namespace paths which do not contain classname or keys.</li>
+      <li>Class paths which do not contain keys.</li>
+      <li>Instance paths which contain all elements.</li>
+    </ul>
+    <p>So far, so good. The <code>scheme:host:port</code> part is optional, so you may not rely on it. Therefore the SBLIM CIM Client for Java ignores the host information
+       when calling <code>CIMObjectPath.equals()</code>.<p>
+    <p>Unfortunately the CIM-XML protocol specification defines quite strange behavior regarding object paths, e.g. an instance retrieved via EnumerateInstances contains
+       one, but when retrieved via GetInstance contains none at all. The SBLIM CIM Client for Java hides this as best as possible from the application. Therefore you can expect a full
+       object path any time, but the host information is still optional. See the table below:</p>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+     <tr style="background-color: #f0f0f0"><th>&nbsp;</th><th colspan="3">SBLIM CIM Client for Java</th><th colspan="3">CIM-XML</th></tr>
+     <tr style="background-color: #f0f0f0"><th>Operation</th><th>host</th><th>namespace</th><th>classname/keys</th><th>host</th><th>namespace</th><th>classname/keys</th></tr>
+     <tr><td>EnumerateClassNames</td><td align="center">no</td><td align="center">yes</td><td align="center">yes</td><td align="center">no</td><td align="center">no</td><td align="center">yes</td></tr>
+     <tr><td>EnumerateClasses</td><td align="center">no</td><td align="center">yes</td><td align="center">yes</td><td align="center">no</td><td align="center">no</td><td align="center">yes</td></tr>
+     <tr><td>GetClass</td><td align="center">no</td><td align="center">yes</td><td align="center">yes</td><td align="center">no</td><td align="center">no</td><td align="center">yes</td></tr>
+     <tr><td>EnumerateInstanceNames</td><td align="center">no</td><td align="center">yes</td><td align="center">yes</td><td align="center">no</td><td align="center">no</td><td align="center">yes</td></tr>
+     <tr><td>EnumerateInstances</td><td align="center">no</td><td align="center">yes</td><td align="center">yes</td><td align="center">no</td><td align="center">no</td><td align="center">yes</td></tr>
+     <tr><td>GetInstance</td><td align="center">no</td><td align="center">yes</td><td align="center">yes</td><td align="center">no</td><td align="center">no</td><td align="center">no</td></tr>
+     <tr><td>AssociatorNames</td><td align="center">maybe</td><td align="center">yes</td><td align="center">yes</td><td align="center">maybe</td><td align="center">maybe</td><td align="center">yes</td></tr>
+     <tr><td>Associators</td><td align="center">yes</td><td align="center">yes</td><td align="center">yes</td><td align="center">yes</td><td align="center">yes</td><td align="center">yes</td></tr>
+     <tr><td>ReferenceNames</td><td align="center">maybe</td><td align="center">yes</td><td align="center">yes</td><td align="center">maybe</td><td align="center">maybe</td><td align="center">yes</td></tr>
+     <tr><td>References</td><td align="center">yes</td><td align="center">yes</td><td align="center">yes</td><td align="center">yes</td><td align="center">yes</td><td align="center">yes</td></tr>
+    </table>     
+
+  </body>
+</html>

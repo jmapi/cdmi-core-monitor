@@ -1,0 +1,233 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><head>
+<!--
+ *
+ * (C) Copyright IBM Corp. 2005, 2010
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Andreas Maier, IBM, maiera@de.ibm.com
+ *
+ * Change History
+ * Flag       Date        Prog         Description
+ *-------------------------------------------------------------------------------
+ * 2003590    2008-06-30  blaschke-oss Change licensing from CPL to EPL
+ * 2799260    2009-06-01  raman_arora  Fix left over @author tag from Java5 upgrade
+ * 2972697    2010-03-18  blaschke-oss Fix spelling errors in HTML files
+ * 2990370    2010-04-22  blaschke-oss Development/unittest HTML out of date
+-->
+</head>
+<body style="background-color: white;">
+<h2>Terminology</h2>
+
+<p>The following terminology is used in the documentation of the SBLIM CIM
+Client for Java.  As a DMTF Glossary document evolves, this terminology will be drawn
+from there, over time.</p>
+
+
+
+<h3>CIM object related terms</h3>
+
+<dl style="margin-left: 40px;">
+
+<dt style="font-weight:  bold;">CIM namespace</dt><dd>Run-time container within
+a CIM server that can contain CIM classes, instances and qualifier
+declarations.  For details, refer to the CIM Infrastructure Specification
+[DSP0004].</dd><p> &nbsp;</p>
+
+<dt style="font-weight:  bold;">CIM class</dt><dd>A CIM class, as defined in
+the CIM Infrastructure Specification [DSP0004].  The term is used for all three
+kinds of CIM classes (normal, association and indication).  The term is used
+both for the CIM class object in the CIM server/provider and for its client
+side copy.</dd><p>&nbsp;</p>
+
+<p><span style="font-weight:  bold;">Terms denoting specific kinds of CIM
+classes:</span></p>
+
+<dl style="margin-left:  40px;">
+
+<dt style="font-weight:  bold;">Normal CIM class</dt><dd>A CIM class that is
+neither an association class nor an indication class.</dd><p>&nbsp;</p>
+
+<dt style="font-weight:  bold;">CIM association class</dt><dd>A CIM class that
+has its Association qualifier effectively being true.  Note that the
+Association qualifier is inherited into subclasses.  Also note that the Aggregation
+and Composition qualifiers may refine the semantics of an association class,
+but such classes still remain association classes.</dd><p>&nbsp;</p>
+
+<dt style="font-weight:  bold;">CIM indication class</dt><dd>A CIM class that
+has its Indication qualifier effectively being true.  Note that the Indication
+qualifier is inherited into subclasses.</dd><p>&nbsp;</p>
+
+</dl>
+
+<dt style="font-weight:  bold;">CIM instance</dt><dd>An instance of a CIM
+class.  The term is used both for the CIM instance object in the CIM
+server/provider and for its client side copy.</dd><p>&nbsp;</p>
+
+<dt style="font-weight:  bold;">CIM object</dt><dd>A general term for either a
+CIM class or CIM instance.  Sometimes also includes CIM namespace in
+addition. Sometimes also includes the name (path) of the object.</dd><p>&nbsp;</p>
+
+<p><span style="font-weight:  bold;">Phrases denoting whether the objects
+are the objects in the CIM server or their local copies:</span></p>
+
+<p><span style="margin-left:  40px;">Note: These phrases can be used with all
+the object related terms above.</span></p>
+
+<dl style="margin-left:  40px;">
+
+<dt style="font-weight:  bold;">Local copy of a CIM object</dt><dd>When a CIM
+object is returned to the CIM client, the data being returned is called a
+local copy of the CIM object.</dd><p>&nbsp;</p>
+
+<dt style="font-weight:  bold;">CIM object in the CIM server</dt><dd>Refers to
+the "live" CIM object in the CIM server (or better in the provider).  In the
+case of CIM instances, the live object represents an aspect of a real world
+resource, and manipulation of the CIM instance manipulates the real world
+resource.</dd><p>&nbsp;</p>
+
+</dl>
+
+</dl>
+
+<h3>CIM object naming related terms</h3>
+
+<dl style="margin-left: 40px;">
+
+<dt style="font-weight:  bold;">CIM object path</dt><dd>General term for a
+reference to a CIM namespace, class or instance object in a CIM server.  These
+object paths allow accessing the referenced CIM objects in the CIM server.  The
+term does not imply any particular scope at which the object path is unique.
+An alternative phrase used in DMTF documents is "CIM object name".</dd>
+
+<p><span style="font-weight:  bold;">Terms for specific kinds of CIM object
+paths:</span></p>
+
+<dl style="margin-left:  40px;">
+
+<dt style="font-weight:  bold;">CIM namespace path</dt><dd>CIM object path
+referencing a CIM namespace object in a CIM server.</dd>
+
+<dt style="font-weight:  bold;">CIM class path</dt><dd>CIM object path
+referencing a CIM class object within a CIM namespace in a CIM server.</dd>
+
+<dt style="font-weight:  bold;">CIM instance path</dt><dd>CIM object path
+referencing a CIM instance object within a CIM namespace in a CIM server.</dd>
+
+</dl>
+
+<p><span style="font-weight:  bold;">Phrases describing the uniqueness scope of
+object paths:</span></p>
+
+<p><span style="margin-left:  40px;">Note: These phrases can be used with all
+the path related terms above.</span></p>
+
+<dl style="margin-left:  40px;">
+
+<dt style="font-weight:  bold;">Global CIM object path</dt><dd>CIM object path
+using a reference that is globally unique (that is, across CIM servers).  The
+object path identifies the host and port of the CIM server, the CIM namespace
+within the server, and the name of the object within the namespace.</dd>
+
+<dt style="font-weight:  bold;">Intra-Server CIM object path</dt><dd>CIM object
+path using a reference that is unique within a single CIM server.  The object
+path does not identify the CIM server.  It identifies the CIM namespace within
+a CIM server, and the name of the object within the namespace.  An alternative
+phrase used in DMTF documents is "local object path".</dd>
+
+<dt style="font-weight:  bold;">Intra-Namespace CIM object path</dt><dd>CIM
+object path using a reference that is unique within a single CIM namespace.
+The object path does not identify the CIM server or namespace.  It identifies
+the name of the object within the namespace.  An alternative phrase used in
+DMTF documents is "model path", or "class name" for class objects and "instance
+name" for instance objects.</dd>
+
+</dl>
+
+</dl>
+
+<h3>CIM class/instance member related terms</h3>
+
+<dl style="margin-left: 40px;">
+
+<p><span style="font-weight:  bold;">Phrases defining the set of elements in a class
+or instance:</span></p>
+
+<p><span style="margin-left:  40px;">Note: These phrases are stated for properties
+but are equally valid for references and methods.</span></p>
+
+<dl style="margin-left:  40px;">
+
+<dt style="font-weight:  bold;">Properties defined in a class</dt><dd>The set
+of properties introduced in the class, or overridden in the class.  This does
+not include any properties inherited from superclasses, or properties
+introduced or overridden in subclasses of the class.</dd>
+
+<dt style="font-weight:  bold;">Properties defined in the class of an
+instance</dt><dd> The set of properties defined in the class an instance has
+been created of.</dd>
+
+<dt style="font-weight:  bold;">Properties of a class</dt><dd>The set of
+properties effectively visible in the class, including any inherited
+properties.  Overridden properties are contained in that set only once.
+Non-overridden properties with the same name are contained in that separately
+(This should be avoided, but it can happen in different classes, for instance
+when a superclass in a DMTF common schema adds a property that is already
+defined in a subclass that is a vendor extension class).</dd>
+
+<dt style="font-weight:  bold;">Properties of an instance</dt><dd>The set of
+properties effectively present in the instance.</dd>
+
+</dl>
+
+</dl>
+
+<h3>Other terms</h3>
+
+<dl style="margin-left: 40px;">
+
+<dt style="font-weight:  bold;">CIM element</dt><dd>General term for CIM class
+(all kinds:  normal, association, indication), property, reference, method,
+method parameter, qualifier, qualifier flavor or schema.</dd><p> &nbsp;</p>
+
+<dt style="font-weight:  bold;">CIM client protocol</dt><dd>General term for a
+remote communications protocol between CIM client and CIM server.  Note that
+this includes for instance any upcoming Web services protocol and the new
+SM-CLP, and is not restricted to CIM Operations over HTTP.</dd><p> &nbsp;</p>
+
+<dt style="font-weight:  bold;">CIM Operations over HTTP</dt><dd>Name of the
+dominant CIM client protocol, specified in DMTF DSP0200 and DSP0201.</dd><p>
+&nbsp;</p>
+
+<dt style="font-weight:  bold;">CIM client</dt><dd>General term for a component
+(usually a class library) used to communicate with a CIM server.  Handlers for
+indication delivery or asynchronous operation responses are also considered
+part of a CIM client.  Usually, a CIM client is used by a management
+application.</dd><p> &nbsp;</p>
+
+<dt style="font-weight:  bold;">SBLIM CIM Client for Java</dt><dd>Name of this specific
+CIM client.</dd><p> &nbsp;</p>
+
+<dt style="font-weight:  bold;">CIM server</dt><dd>General term for a component
+(usually a demon) providing a service accessible through a CIM client protocol.
+A single CIM server instance may be used by multiple CIM client instances.  In
+the course of handling the requests resulting from interactions with CIM
+clients, a CIM server interfaces with CIM providers for getting certain
+requests handled.</dd><p> &nbsp;</p>
+
+<dt style="font-weight:  bold;">CIM provider</dt><dd>General term for a
+component implementing all behavior that is specific to a particular CIM
+class.  This means, CIM providers are the link between the CIM server and any
+interfaces specific to the real world resources.  It is left open whether a
+single CIM provider can implement one or more CIM classes.  A particular CIM
+provider API is not implied.</dd><p>&nbsp;</p>
+
+</dl>
+</body>
+</html>

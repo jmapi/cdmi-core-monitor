@@ -1,0 +1,185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><head><!--
+ *
+ * (C) Copyright IBM Corp. 2006, 2013
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Alexander Wolf-Reber, IBM, a.wolf-reber@de.ibm.com
+ *
+ * Change History
+ * Flag       Date        Prog         Description
+ *-------------------------------------------------------------------------------
+ * 2003590    2008-06-30  blaschke-oss Change licensing from CPL to EPL
+ * 2524131    2009-01-21  raman_arora  Upgrade client to JDK 1.5 (Phase 1)
+ * 2799260    2009-06-01  raman_arora  Fix left over @author tag from Java5 upgrade
+ * 2972697    2010-03-18  blaschke-oss Fix spelling errors in HTML files
+ * 2990370    2010-04-22  blaschke-oss Development/unittest HTML out of date
+ *    2623    2013-02-24  blaschke-oss Reflect SourceForge upgrade in documentation
+--></head>
+<body style="background-color: white;">
+
+<h1>SBLIM CIM Client for Java Development Guidelines</h1>
+
+<h2>Contact</h2>
+If you have any questions about the SBLIM CIM Client for Java you may contact the development team lead at 
+<a href="mailto:blaschke@us.ibm.com">blaschke@us.ibm.com</a>.
+<h2>Releases</h2>
+<p>Planned releases appear in the middle of the last month of every quarter (middle of March, June, September and December). 
+It might occur that we publish a release out of schedule on request of one of our exploiters as well.<br />
+A release is a code level that has been intensively tested and is supported. Releases are the
+only origins for maintenance branches.</p>
+<h2>CVS</h2>
+<p>The sources can be found at "sblim.cvs.sourceforge.net/cvsroot/sblim/jsr48-client". Refer to SourceForge
+regarding CVS access rules and permissions.</p>
+<p>All patches are committed to the "Experimental" branch first. The code in this branch is the most 
+active, but it hasn't undergone a community review and is therefore unapproved.<br />
+Once a patch has been approved in the community review it will be merged into the "HEAD" branch. When 
+a new release is published it represents the content of the "HEAD" branch at the release date. Of course,
+all releases have a corresponding version tag in CVS.</p>
+<h2>Bug Tickets</h2>
+The Bug Ticket process step are as follows
+<ol>
+	<li>Somebody (a.k.a. the bug owner) files a bug in Bug Tickets.</li>
+	<li>A developer reads the problem description and assigns the bug.</li>
+	<li>A developer either accepts the bug (Status-&gt;open-accepted)<ul><li>Proceed with step 4</li></ul>
+	requests additional information (Status-&gt;open-needinfo)<ul><li>Await new information, repeat step 3</li></ul> 
+	or denies it (Status-&gt;pending-duplicate, pending-invalid, pending-rejected, pending-wont-fix or pending-works-for-me).<ul><li>A reasonable justification will be posted 
+	to the comments. Once the bug owner agrees we proceed with step 8.</li></ul></li>
+	<li>A developer creates a patch. The patch will be attached to Bug Ticket and committed into the 
+	Experimental branch (Status-&gt;open-fixed).</li>
+	<li>The community review is initiated. A corresponding comment is added to Bug Ticket.</li>
+	<li>The community review is completed and successful. A corresponding comment is added to Bug Ticket
+	and the patch is merged into the HEAD branch. The bug Status is changed to pending-fixed. If the community review
+	was unsuccessful we go back to step 4.</li>
+	<li>The patch is picked up by the next release. A corresponding comment is added to Bug Ticket.</li>
+	<li>The bug is closed (Status-&gt;closed-*).</li>
+</ol>
+<h2>Patches</h2>
+Patches are created relative to the latest release. We usually use the "create patch" action
+from Eclipse.	
+<h2>Code Conventions</h2>
+<h3>File Encoding</h3>
+<p>The workspace default encoding should be set to "UTF-8" on all platforms. For *.properties-files
+we keep the Eclipse default of "ISO-8859-1".</p>
+<h3>File Headers</h3>
+<p>Each source file contains a file header stating copyright, authorship and change history. For 
+Java sources the header looks like this:</p>
+<span style="font-family:courier"><pre>
+/**
+ * (C) Copyright IBM Corp. 2006, 2010
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Alexander Wolf-Reber, IBM, a.wolf-reber@de.ibm.com  
+ * 
+ * Change History
+ * Flag       Date        Prog         Description
+ * -------------------------------------------------------------------------------
+ * 1565892    2006-09-27  lupusalex    Make SBLIM client JSR48 compliant
+ */
+</pre></span>
+<p>In .xml &amp; .html files the header looks like this:</p>
+<span style="font-family:courier"><pre>
+&lt;!--
+ * (C) Copyright IBM Corp. 2006, 2010
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Alexander Wolf-Reber, IBM, a.wolf-reber@de.ibm.com  
+ * 
+ * Change History
+ * Flag       Date        Prog         Description
+ * -------------------------------------------------------------------------------
+ * 1565892    2006-09-27  lupusalex    Make SBLIM client JSR48 compliant
+--&gt;
+</pre></span>
+
+<p>Insert your name and IBM email after the "@author" tag and replace "Date" and "Prog" with
+todays date and your CVS account name. We use bug 1565892 for the initial development of the
+JSR48 client.</p>
+<h3>Formatting</h3>
+<p>The code is formatted using the Eclipse code formatter. Use 
+the formatter settings stored in the "EclipseJavaCodeFormatter.xml". All code should be 
+formatted before committing to CVS.</p>
+<h3>Naming Conventions</h3>
+<p>We use the following naming conventions in our code (not all sources have been migrated to these 
+conventions  yet):</p>
+<table border="1" cellpadding="5%">
+	<tr align="left">
+		<th>entity</th>
+		<th>naming</th>
+		<th>sample</th>
+	</tr>
+	<tr>
+		<td>class, interface</td>
+		<td>mixed-case, first letter uppercase</td>
+		<td>class <i>HttpClient</i></td>
+	</tr>
+	<tr>
+		<td>method</td>
+		<td>mixed-case, first letter lowercase</td>
+		<td>HttpClient <i>getClient()</i></td>
+	</tr>
+	<tr>
+		<td>parameter</td>
+		<td>mixed-case, prefix 'p'</td>
+		<td>void setClient(HttpClient <i>pClient</i>)</td>
+	</tr>
+	<tr>
+		<td>local variable</td>
+		<td>mixed-case, first letter lowercase</td>
+		<td>int <i>loopCounter</i></td>
+	</tr>
+	<tr>
+		<td>field</td>
+		<td>mixed-case, prefix 'i'</td>
+		<td>String <i>iName</i></td>
+	</tr>
+	<tr>
+		<td>static field</td>
+		<td>mixed-case, prefix 'c'</td>
+		<td>static String <i>cName</i></td>
+	</tr>
+	<tr>
+		<td>static final field</td>
+		<td>uppercase</td>
+		<td>static final String <i>NAME</i> = "SBLIM"</td>
+	</tr>
+</table>
+<p>Access to members is not qualified with "this." the prefixing usually does a good job avoiding 
+hidden members. </p>
+<h3>Javadoc</h3>
+<p>Javadoc is mandatory for all public APIs of a class. This includes the class comment, methods comments 
+and public member comments. It's mandatory as well for packages. See existing "package.html" files as
+example for package level javadoc.</p>
+<h3>Miscellaneous</h3>
+<p><em>We aim at warning-free code.</em> The project settings in CVS include a high warning level,
+do not mangle with them. All warnings have to be resolved, including unused imports or missing javadoc
+before any code is committed. There are a few warnings that can be ignored for good reason, e.g. a
+precautionary throws declaration where the declared exception is not actually thrown by the current
+implementation. But the cases are rare.</p>
+<p>All code is REQUIRED to compile on IBM/SUN Java 1.5.x/1.6.x/1.7.x. 
+Therefore Java 1.6 and 1.7 constructs are not allowed.</p>
+<p>Use of default or protected visibility is discouraged. Fields should be private, provide getters 
+and setters for public or subclass access. External and internal classes/interfaces should be clearly
+separated by using "*.internal" packages.</p>
+<p>The <em>public</em> content 
+of the javax.* classes is defined by JSR48. It is prohibited by license terms to add, change or omit any
+visible (public or protected) entities (classes, interfaces, fields, methods, parameters).</p>
+</body></html>

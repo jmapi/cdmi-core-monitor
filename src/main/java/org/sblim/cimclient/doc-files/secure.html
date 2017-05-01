@@ -1,0 +1,269 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><head>
+<!--
+ *
+ * (C) Copyright IBM Corp. 2006, 2012
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Alexander Wolf-Reber, IBM, a.wolf-reber@de.ibm.com
+ *
+ * Change History
+ * Flag       Date        Prog         Description
+ *-------------------------------------------------------------------------------
+ * 2003590    2008-06-30  blaschke-oss Change licensing from CPL to EPL
+ * 2799260    2009-06-01  raman_arora  Fix left over @author tag from Java5 upgrade
+ * 2972697    2010-03-18  blaschke-oss Fix spelling errors in HTML files
+ * 2990370    2010-04-22  blaschke-oss Development/unittest HTML out of date
+ * 3536398    2012-08-20  hellerda     Update HTML to reflect secure indication support
+ * 3536399    2012-08-25  hellerda     Add client/listener peer authentication properties
+-->
+</head>
+<body style="background-color: white;">
+
+<h1>Getting Started with Secure Connections</h1>
+<a href="#intro">Introduction</a><br />
+<a href="#basics">Authentication basics</a><br />
+<a href="#props">Keystore Configuration Properties</a><br />
+<a href="#configs">Configurations for client connections</a><br />
+<a href="#c1">"No authentication" configuration</a><br />
+<a href="#c2">"CIMOM authentication" configuration</a><br />
+<a href="#c3">"Client authentication " configuration</a><br />
+<a href="#c4">"Mutual authentication" configuration</a><br />
+<a href="#keystore">Creation of a keystore</a><br />
+<a href="#export">Export of a certificate</a><br />
+<a href="#truststore">Creation of a truststore</a><br />
+<a href="#import">Import of a certificate</a><br />
+<a href="#params">Configuration parameters for secure connections</a><br />
+<a href="#csockets">Custom socket factories</a><br />
+<br />
+<a id="intro" name="intro" /><h2>Introduction</h2>
+<p>The following text will explain how to get secure connections from the SBLIM CIM Client for Java to the 
+CIM Object Manager working.</p>
+<p>SSL/TLS may provide
+<ul>
+    <li>confidentiality - no third party can read the content of the communication.</li>
+    <li>integrity - no third party can alter the content of the communication unnoticed.</li>
+    <li>authentication - the identity of one or both partners is confirmed.</li>
+</ul>
+Confidentiality is ensured by encryption of any data sent over the network. Integrity is 
+ensured by hashes of the data that can be used by the receiver to detect any changes. 
+Authentication is implemented by exchanging X509 certificates between client and CIMOM. 
+Note that SSL/TLS authentication is on
+a communication endpoint scope and not on a user scope. It ensures that two systems talking to
+each other really have the identities they proclaim. User authentication is usually done on an
+application level (here CIMOM) in addition to SSL/TLS.</p>
+<p>The more complex part of SSL/TLS setups is the authentication. If you can live without it,
+things get much easier. Below you'll find a table with the possible configurations. The higher
+the number the more complex and secure it becomes. Keep in mind that you cannot choose the security 
+configuration independently of your counterpart (the CIMOM), e.g. if the CIMOM defines client 
+authentication as mandatory you cannot get around it. Vice-versa if the CIMOM doesn't care about 
+client authentication you might send as many certificates you want - it will never ever evaluate 
+them.</p>
+
+<a id="basics" name="basics" /><h2>Authentication basics</h2>
+<p>SSL/TLS authentication is X509 certificate-based. Each side provides a X509 certificate that confirms its identity. The certificates are 
+exchanged and each side validates the received certificate against a local copy.</p>
+<p>To store the certificates two files are used. The first is the so-called keystore and contains your own certificate with all private and public key information.
+The second is the so-called truststore and contains local copies of certificates from other systems you trust. These copies contain only the public
+key information.</p>
+<p>How to create a keystore for Java is explained <a href="#keystore">here</a>.</p>
+<p>The described mechanism would enforce every receiver to have the certificate of every trusted sender stored in its truststore. Certificate chains
+were invented to get around this. In a certificate chain an organization certifies the authenticity of an entity's certificate and the receiver 
+just validates the authenticity of the organization's certificate. Therefore with just the certificate of the organization in the truststore the
+receiver can validate all entities that have certificates based on the organization's certificate.</p>
+
+<a id="props" name="props" /><h2>Keystore Configuration Properties</h2>
+
+<p>The following properties allow you to configure the client keystore and truststore:</p>
+
+   <ul>
+     <li><em>javax.net.ssl.keyStore</em>: The file path of the SSL keystore.</li> 
+     <li><em>javax.net.ssl.keyStoreType</em>: The type of the SSL keystore repository. Typically this is <i>JKS</i> or <i>Java KeyStore</i> type, which is the default.</li> 
+     <li><em>javax.net.ssl.keyStorePassword</em>: The password of the keystore.</li> 
+     <li><em>javax.net.ssl.trustStore</em>: The file path of the SSL truststore.</li> 
+     <li><em>javax.net.ssl.trustStoreType</em>: The type of the SSL truststore repository. Typically this is <i>JKS</i>, which is the default.
+     <li><em>javax.net.ssl.trustStorePassword</em>: The password of the truststore.</li> 
+   </ul>
+
+<p>Whenever the keystore properties are defined for the client -- either by global configuration via the properties file or via a call to <code>System.setProperty()</code>, or set for the client directly via a call to <code>setProperty()</code> on an instance of a client -- the keystore will be activated automatically and no further configuration is required.</p>
+
+<p>For the truststore however, an additional property is provided to control activation; setting the above truststore properties alone is not sufficient to enable the truststore.  (The reason for this difference is explained in more detail in <a href="secure_indications.html">Getting Started with Secure Indications</a>). To enable the truststore you must set the following property to <code>true</code> (the default is <code>false</code>):</p>
+
+   <ul>
+     <li><em>sblim.wbem.sslClientPeerVerification</em>: Determines if a HTTPS client will attempt to authenticate the server (i.e. CIMOM) by verifying the server certificate. If true, the client will attempt to verify the server certificate against the contents of the truststore defined in &quot;javax.net.ssl.trustStore&quot;. If false, no verification is attempted.</li>
+   </ul>
+
+<p>If the truststore properties are set but <code>sslClientPeerVerification</code> is <code>false</code>, the truststore is not activated and all connections will be allowed (i.e. every CIMOM is trusted). The only real use of this configuration is to temporarily disable the truststore for testing.  Conversely, if <code>sslClientPeerVerification</code> is <code>true</code> but the truststore properties are not set (or the truststore file is missing or otherwise unreadable), no connections will be allowed (i.e. no CIMOM is trusted), as this is considered to be a misconfiguration. In both cases, a WARNING message is sent to the logger. </p>
+
+<a id="configs" name="configs" /><h2>Configurations for client connections</h2>
+<p>The table below shows the possible configurations.</p>
+<table border="1" cellpadding="5">
+   <tr><th>Configuration</th><th>Encryption/Hashing</th><th>CIMOM authenticated</th><th>Client authenticated</th><th>Secure indication<br />listeners supported</th></tr>
+   <tr align="center"><td><a href="#c1">No authentication</a></td><td>yes</td><td>no</td><td>no</td><td>no</td></tr>
+   <tr align="center"><td><a href="#c2">CIMOM authentication</a></td><td>yes</td><td>yes</td><td>no</td><td>no</td></tr>
+   <tr align="center"><td><a href="#c3">Client authentication</a></td><td>yes</td><td>no</td><td>yes</td><td>yes</td></tr>
+   <tr align="center"><td><a href="#c4">Mutual authentication</a></td><td>yes</td><td>yes</td><td>yes</td><td>yes</td></tr>
+</table>   
+
+<a id="c1" name="c1" /><h2>"No authentication" configuration</h2>
+<ul>
+    <li>Confidentiality: given</li>
+    <li>Integrity: given</li>
+    <li>Authentication: no</li>
+    <li>Keystore: No</li>
+    <li>Truststore: No</li>
+</ul>
+<p>To open an SSL/TLS-secured client connection to a CIMOM just make
+your client call as usual, but replace "http" by "https" as well as the non-secure port 
+(usually 5988) by the secure port (usually 5989) in the CIMOM URL. That's all!</p>
+<p>Note: In this scenario we decided not to evaluate the CIMOM's X509 certificate. The client
+is free to do that.</p> 
+<p>Note: We also decided not to send any X509 certificate to the CIMOM to authenticate
+ourselves. This will work only if the CIMOM is configured to ignore client certificates. If
+the CIMOM's configuration is to check certificates the connection will be refused by the CIMOM. 
+Today the vast majority of CIMOMs are configured to not check client certificates.</p>
+
+<a id="c2" name="c2" /><h2>"CIMOM authentication" configuration</h2>
+<ul>
+    <li>Confidentiality: given</li>
+    <li>Integrity: given</li>
+    <li>Authentication: server only</li>
+    <li>Keystore: No</li>
+    <li>Truststore: Required</li>
+</ul>
+<p>In this scenario we configure the client to check the identity of the CIMOM. To do this we need to <a href="#truststore">create a truststore</a> and set the appropriate configuration properties described above.  When <code>sslClientPeerVerification</code> is set to <code>true</code>, the keystore will be activated and the client will automatically check the CIMOM certificate against the truststore. Everything else is equal to the "no authorization" configuration</p>
+
+<p>Note: In this scenario we decided to evaluate the CIMOM's X509 certificate. In order to do that we have to
+import the CIMOM's certificate into our truststore. See <a href="#import">importing a certificate</a> for 
+details.</p>
+<p>Note: In this scenario we decided not to send any X509 certificate to the CIMOM to authenticate
+ourselves. This will work only if the CIMOM is configured to ignore client certificates. If
+the CIMOM's configuration is to check certificates the connection will be refused by the CIMOM. 
+Today the vast majority of CIMOMs are configured to not check client certificates.</p>
+
+<a id="c3" name="c3" /><h2>"Client authentication" configuration</h2>
+<ul>
+    <li>Confidentiality: given</li>
+    <li>Integrity: given</li>
+    <li>Authentication: client only</li>
+    <li>Keystore: Required</li>
+    <li>Truststore: No</li>
+</ul>
+<p>In this scenario we configure the CIMOM to check the identity of the client.  We want our client to  send  a certificate to the CIMOM and for that we 
+need to <a href="#keystore">create a keystore</a> and set the appropriate configuration properties. Once this is done the keystore will be activated and the client will automatically send our certificate on request by the CIMOM.
+Everything else is equal to the "no authorization" configuration.</p>
+<p>Note: In this scenario we decided not to evaluate the CIMOM's X509 certificate. The client can be configured to do that as described above.</p>
+
+<p> Note: The CIMOM has to be enabled to validate our certificate. To do this we must import into the CIMOM's truststore either  a copy of our client cert or an appropriate &quot;Certificate Authority&quot; (CA) cert that is a <i>signer</i> for our client cert.   (Really , the most general case is that the CA cert is the signer of one or more certs in a <i>trust chain</i> leading to our client cert.) The simplest case is where the CIMOM has a copy of our client cert. See <a href="#export">exporting a certificate</a> for a description on how to export a certificate from your client keystore so that you can import it into the CIMOM's truststore or other central certificate store (e.g. LDAP).</p>
+
+<p>Finally, note that most CIMOMs have three configurable settings governing authentication of the client: SFCB has ignore, accept, require. OpenPegasus has disabled, optional, required. In the case of ignore (disabled), the CIMOM will not check the client certificate. In the case of require (required) it will.  The often confusing case is accept (optional); here the CIMOM will enforce the certificate check only if the client provides one. If your CIMOM is so  configured   you may find  that it happily accepts the connection without the client sending any X509 certificate. But once the client keystore is configured and the client does send  a certificate, the CIMOM will suddenly behave as if require (required) is configured, and will refuse the connection if  it is unable to verify the client cert.</p>
+
+<a id="c4" name="c4" /><h2>"Mutual authentication" configuration</h2>
+<ul>
+    <li>Confidentiality: given</li>
+    <li>Integrity: given</li>
+    <li>Authentication: client and CIMOM</li>
+    <li>Keystore: Required</li>
+    <li>Truststore: Required</li>
+</ul>
+
+<p>In this scenario we configure certificate validation in both directions simultaneously.</p>
+
+<p>In short, this configuration comprises the &quot;CIMOM authentication&quot; and &quot;Client authentication&quot; together.</p>
+
+<a id="keystore" name="keystore" />
+<h2>Creation of a Keystore</h2>
+<p>Keystores hold public/private key pairs that are used to authenticate ourselves with others
+and as asymmetric key to encrypt the handshake for the symmetric session key. The JVM provides a 
+tool that creates a keystore and generates keys: <code>keytool</code></p>
+<p><code>keytool</code> creates a file named keystore, generates a private/public key pair and stores it in the 
+file. Such a file that stores private/public key pairs for authentication ourselves with others is
+called "keystore". Open a shell, change to your JVMs bin directory and enter:</p>
+<div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+<div style="background-color: #f0f0f0; padding: 10px;">
+<pre>
+keytool -genkey -alias mykey -keyalg RSA -validity 7 -keystore keystore
+</pre></div></div>
+<p><code>keytool</code> will ask you a lot of questions and finally request a password for the keystore. This password
+is essential for later access to the keystore. </p>
+<p>Now that we have created a key and a keystore we have to tell the SBLIM CIM Client for Java where to find it. There are
+three possibilities:</p>
+<ul>
+    <li>Starting the JVM with <code>-Djavax.net.ssl.keyStore=&lt;path&gt; -Djavax.net.ssl.keyStorePassword=&lt;password&gt;</code></li>
+    <li>Setting the JVM system properties <code>javax.net.ssl.keyStore</code> and <code>javax.net.ssl.keyStorePassword</code> to the
+    keystore path/password using <code>System.setProperty()</code> at runtime.</li>
+    <li>Setting <code>javax.net.ssl.keyStore</code> and <code>javax.net.ssl.keyStorePassword</code> to the
+    keystore path/password in the <code>sblim-cim-client2.properties</code> file.</li>
+</ul>
+
+<a id="truststore" name="truststore" />
+<h2>Creation of a Truststore</h2>
+<p>Truststores hold public certificates that are used to authenticate others with ourselves. The JVM provides a 
+tool that creates a truststore: <code>keytool</code> A truststore file is automatically created when you import
+a certificate with keytool, see <a href="#import">import of a certificate</a> for details.</p>
+<p>Once we have created a truststore we have to tell the SBLIM CIM Client for Java where to find it. There are
+three possibilities:</p>
+<ul>
+    <li>Starting the JVM with <code>-Djavax.net.ssl.trustStore=&lt;path&gt; -Djavax.net.ssl.trustStorePassword=&lt;password&gt;</code></li>
+    <li>Setting the JVM system properties <code>javax.net.ssl.trustStore</code> and <code>javax.net.ssl.trustStorePassword</code> to the
+    truststore path/password using <code>System.setProperty()</code> at runtime.</li>
+    <li>Setting <code>javax.net.ssl.trustStore</code> and <code>javax.net.ssl.trustStorePassword</code> to the
+    truststore path/password in the <code>sblim-cim-client2.properties</code> file.</li>
+</ul>
+
+<a id="import" name="import" />
+<h2>Import of a Certificate</h2>
+<p>If you want to import the public part of a CIMOM's certificate in your truststore you can do that
+with keytool:</p>
+<div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+<div style="background-color: #f0f0f0; padding: 10px;">
+<pre>
+keytool -import -alias mycimom -file mycimom.cer -keystore truststore
+</pre></div></div>
+Please refer to the CIMOM's documentation regarding the export of the CIMOM's certificate.
+
+<p>A note on terminology: we use the terms <i>keystore</i> and <i>truststore</i> to refer to the certificate stores that perform 
+the roles described above. Be aware that the term <i>keystore</i> is also used in the general sense to describe any certificate store, 
+regardless of role. This latter definition is used by <code>keytool</code>, and for that reason you will use the -keystore
+option to point to either your keystore or truststore.</p>
+
+<p>Also note: Your JVM might ship with a default truststore (containing common CA certificates issued by well-known certificate authorities).  If so, the above command would import  the cert into the existing truststore. If not,  a new truststore will be created.  In either case <code>keytool</code> will prompt you for a password.  For an exisitng truststore the password will be the one already set for the truststore (commonly this is "changeit" for the default JVM truststore).  For a new truststore, the password you provide will be the one set going forward. In either case you  can optionally specify the  password on the command line using the -password option.</p>
+
+<a id="export" name="export" />
+<h2>Export of a certificate</h2>
+<p>If you want to export the public part of your certificate to a file (e.g. for import into to a CIMOM's truststore) you can do that
+with keytool:</p>
+<div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+<div style="background-color: #f0f0f0; padding: 10px;">
+<pre>
+keytool -export -alias mykey -keystore keystore -rfc -file mykey.cer
+</pre></div></div>
+<p>The -rfc option ensures the cert is exported in PEM format, the format commonly required by the CIMOM.</p>
+Please refer to the CIMOM's documentation regarding the import of the certificate into the CIMOM's truststore.
+
+<a id="params" name="params" />
+<h2>Configuration parameters for secure connections</h2>
+<p>The configuration parameters can be found <a href="../WBEMConfigurationProperties.html">here</a>. The properties beginning with
+<code>KEYSTORE_</code>, <code>TRUSTSTORE_</code> or <code>SSL_</code> control the SSL configuration.</p>
+<p>Note: The SSL system properties globally configure the JREs SSL support. If you want to use settings different from the global
+JRE configuration, you'll have to use <code>WBEMClientSBLIM.setProperty()</code> to override the global setting. Keep in mind that
+this applies only to the specific <code>WBEMClient</code> instance. There is no way to set a global SSL configuration for the CIM 
+client independent from the JRE configuration.</p> 
+
+<a id="csockets" name="csockets" />
+<h2>Custom socket factories</h2>
+<p>You can pass your own <code>SocketFactory</code> to the SBLIM CIM Client for Java by casting the <code>WBEMClient</code> returned
+from <code>WBEMClientFactory.getClient()</code> to <code>WBEMClientSBLIM</code> and calling the <code>setCustomSocketFactory()</code>.
+This setting applies only to this specific <code>WBEMClient</code> instance.</p>
+<p>By setting your own <code>SocketFactory</code> you're bypassing the SSL configuration of the SBLIM CIM Client for Java. When creating 
+the <code>SocketFactory</code> you set up your own <code>SSLContext</code> that defines things like keystores, truststores, 
+algorithms, etc. Using your own <code>SocketFactory</code> you may be able to get around any limitations of the SBLIM CIM
+Client for Java's SSL/TLS support.</p>
+
+</body></html>

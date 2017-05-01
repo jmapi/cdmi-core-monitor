@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><head>
+<!--
+ *
+ * (C) Copyright IBM Corp. 2006, 2012
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Alexander Wolf-Reber, IBM, a.wolf-reber@de.ibm.com
+ *
+ * Change History
+ * Flag       Date        Prog         Description
+ *-------------------------------------------------------------------------------
+ * 2003590    2008-06-30  blaschke-oss Change licensing from CPL to EPL
+ * 2799260    2009-06-01  raman_arora  Fix left over @author tag from Java5 upgrade
+ * 2972697    2010-03-18  blaschke-oss Fix spelling errors in HTML files
+ * 2990370    2010-04-22  blaschke-oss Development/unittest HTML out of date
+ * 3536398    2012-08-20  hellerda     Update HTML to reflect secure indication support
+-->
+</head>
+<body style="background-color: white;">
+
+<h1>Configuring the Client</h1>
+<p>The SBLIM CIM Client for Java has a broad set of configuration options that influence the runtime behavior of the client.
+</p>
+<h2>The Configuration File</h2>
+<p>The SBLIM CIM Client for Java can be configured by a configuration file which follows the Java properties approach. So, 
+<code>key=value</code> entries can be used to define values for the many available properties.
+The file name of the configuration file is <code>sblim-cim-client2.properties</code>. The client searches by default
+these directories in the given order:</p>
+<ul><li>the active directory</li><li>the active user's home directory</li><li><code>/etc/java</code></li></ul> 
+<p>If the file is found once, the search stops and that file is used as input. So it is not possible to use two configuration 
+files in parallel. If properties are not defined in the used configuration file, the default values are taken.
+</p>
+<p>The user may override the default search location by specifying the JVM system property <code>sblim.wbem.configURL</code>: 
+<ul><li><code>javaw -jar myapp.jar -Dsblim.wbem.configURL=file:/root/myproperties</code><br />will set the location at JVM startup</li>
+<li><code>System.setProperty(WBEMConfigurationProperties.CONFIG_URL, "file:/root/myproperties");</code><br />will set the location 
+from within your application. This way the timing is critical, because the <code>WBEMConfiguration</code> class will load the configuration
+file in its static initializer and any change of the property afterwards won't have any effect.</li></ul>
+<p>Note that <code>sblim.wbem.configURL</code> contains a URL, so you're not restricted to a local file but can load the properties file
+from an HTTP server or some other remote location.</p> 
+<p>The configuration file contains documentation and declarations of all recognized configuration properties. The declarations
+are commented out by default. To change a property delete the leading # from the declaration and set the appropriate value.
+Here is an example:</p>
+<div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+<div style="background-color: #f0f0f0; padding: 10px;">
+<pre>
+# Specifies the XML parser for parsing CIM-XML responses.
+# The SAX parser is the default choice since it is fast, resource saving
+# and interoperable. The streaming algorithm of the PULL parser uses the
+# fewest possible resources but at the prize to keep the CIMOMs response
+# open for a long time. That works with many but not all CIMOMs. The DOM
+# parser is slow and resource hungry but nice to debug.
+#
+# Type: Discrete
+# Recognition: Anytime
+# Range: DOM, PULL, SAX
+# Default: SAX
+#
+sblim.wbem.cimxmlParser=PULL
+</pre></div></div>
+<p>The sample will use the value <code>PULL</code> for the property <code>sblim.wbem.cimxmlParser</code>. The lines starting 
+with a <code>#</code> are comments and will be ignored.</p>
+<div style="border: 1px dashed #cc0000; margin: 10px">
+<div style="background-color: #ffffcc; padding: 10px;">
+<b>Be Careful</b>: The property keys are case sensitive. So, please avoid typos.
+</div></div>
+<p>&nbsp;</p>
+<h2>Configuration During Runtime</h2>
+<p>All configuration properties can be set during runtime. The interface <a href="../WBEMConfigurationProperties.html"><code>
+WBEMConfigurationProperties</code></a> contains constants for every property together with detailed documentation on each 
+property.</p>
+<h3>Global Settings</h3>
+<p>The global settings have JVM scope. Most properties are set via <code>System.setProperty()</code>, a few ones via <code>Security.setProperty()</code> (see 
+documentation of corresponding properties). The documentation also explains when a property change will be recognized.</p>
+<p>The code that loads the configuration file calls <code>System.setProperty()</code> or <code>Security.setProperty()</code> as well to engage the 
+configuration.</p> 
+<p>When you try to set the settings that have recognition "startup" like <code>sblim.wbem.configURL</code> or <code>sblim.wbem.logFileLevel</code> keep in
+mind that these settings are evaluated in the static initializers of the internal classes <a href="../../../../org/sblim/cimclient/internal/util/WBEMConfiguration.html">
+<code>WBEMConfiguration</code></a> or <a href="../../../../org/sblim/cimclient/internal/logging/LogAndTraceBroker.html"><code>LogAndTraceBroker</code></a>. 
+These classes are referenced by many classes of the CIM Client. Therefore you have to ensure that you set these properties <b>before</b> you reference a 
+CIM Client class in your code (what will trigger the class loader and thus the static initializers).</p>
+<h3>Client Settings</h3>
+<p>It is possible to override the global configuration for an individual <a href="../../../../javax/wbem/client/WBEMClient.html"><code>
+WBEMClient</code></a> instance. These settings are shared between all threads using that client instance. In order to do this cast the 
+<code>WBEMClient</code> to <a href="../WBEMClientSBLIM.html"><code>
+WBEMClientSBLIM</code></a> and call <a href="../WBEMClientSBLIM.html#setProperty(java.lang.String,%20java.lang.String)"><code>
+setProperty()</code></a>. Note that most properties will have no effect if set after the 
+<a href="../../../../javax/wbem/client/WBEMClient.html#initialize(javax.cim.CIMObjectPath,%20javax.security.auth.Subject,%20java.util.Locale[])">
+<code>initialize()</code></a> method was called.</p>
+<h3>Listener Settings</h3>
+<p>It is possible to override the global configuration for an individual <a href="../../../../javax/wbem/listener/WBEMListener.html"><code>
+WBEMListener</code></a> instance. These settings are shared between all threads using that listener instance. In order to do this cast the 
+<code>WBEMListener</code> to <a href="../WBEMListenerSBLIM.html"><code>
+WBEMListenerSBLIM</code></a> and call <a href="../WBEMListenerSBLIM.html#setProperty(java.lang.String,%20java.lang.String)"><code>
+setProperty()</code></a>. Note that most properties will have no effect if set after the 
+<a href="../../../../javax/wbem/listener/WBEMListener.html#addListener(javax.wbem.listener.IndicationListener,%20int,%20java.lang.String)">
+<code>addListener()</code></a> method was called.  It is also possible to set a listener's properties by creating a new <code>java.util.Properties</code>
+object and passing it to the <a href="../WBEMListenerSBLIM.html"><code>WBEMListenerSBLIM</code></a> variant of
+ <a href="../WBEMListenerSBLIM.html#addListener(org.sblim.cimclient.IndicationListenerSBLIM,%20int,%20java.lang.String,%20java.lang.String,%20java.util.Properties)">
+<code>addListener()</code></a> that accepts properties.</p>
+<h3>Local Settings</h3>
+<p>Imagine you've multiple threads using the same client instance concurrently and you want to reconfigure the instance in one thread, but keep the other threads 
+unaffected. This is what the local settings do. They override the client and global settings, but are recognized by the current thread only. You can set
+a local property by casting the <code>WBEMClient</code> to <a href="../WBEMClientSBLIM.html"><code> WBEMClientSBLIM</code></a> and
+calling <a href="../WBEMClientSBLIM.html#setLocalProperty(java.lang.String,%20java.lang.String)"><code>
+setLocalProperty()</code></a>. Local settings are inherited from parent thread to child thread: When the child thread is created it receives the initial values
+from its parent thread. Afterwards the local settings of parent and child are completely independent.</p>
+<h3>Bottom Line</h3>
+<p>The client has four possible layers for any configuration property. They override each other in the following order:</p>
+<ol>
+<li>local setting</li>
+<li>client or listener setting</li>
+<li>global setting</li>
+<li>default value</li>
+</ol>
+<p>The global settings can be initialized either from a configuration file or via method calls. Client, listener and local settings are initialized via method calls only. The default values
+are compile time constants and not subject to change.</p>
+</body></html>

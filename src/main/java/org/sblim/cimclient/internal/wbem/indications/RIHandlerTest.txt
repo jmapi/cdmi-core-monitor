@@ -1,0 +1,140 @@
+This text file contains Java code that can be inserted into CIMIndicationHandler.java in the
+dispatchIndications method between the following two lines:
+
+					CIMInstance indicationInst = (CIMInstance) cimEvent;
+
+and:
+
+					String path = pReader.getMethod().getFile();
+					
+This Java code will alter incoming indications to produce out-of-order, duplicate and missing
+indications as well as context switches and switches from SC/SN on to off and SC/SN off to on.
+Either Jsr48PegasusIndicationSample or Jsr48SfcbIndicationSample can be used to exercise this
+Java code, simply alter the samples to:
+
+1) generate 35 indications instead of 1
+2) move Thread.sleep(5000) out of loop to end and increase to 30000
+3) set sblim.wbem.listenerDeliveryRetryAttempts=1 and sblim.wbem.listenerDeliveryRetryInterval=1
+					
+Java code snippet #1 tests just about everything, starting with SC/SN on:
+					
+					CIMProperty<?> seqNumProp = indicationInst.getProperty("SequenceNumber");
+					Long seqNum = (Long) seqNumProp.getValue();
+					long seqNumVal = seqNum.longValue();
+					// 2,3,4 out of order until 5 arrives
+					// 7 missing
+					// 9 duplicate
+					// 11-14 new context, #'s 11-14
+					// 15-18 null context
+					// 19-24 new context, #'s 0-5
+					// 25-27 null context
+					// 28+ new context, out of order until 6 arrives
+					String newCtx1 = new String("MyShinyNewContext");
+					String newCtx2 = new String("MyBrandSpankingShinyNewContext");
+					String newCtx3 = new String("MyLastAndFinalBrandSpankingShinyNewContext");
+					if (seqNumVal == 2) {
+						CIMProperty<?> n[] = { new CIMProperty<Long>("SequenceNumber",
+								CIMDataType.SINT64_T, new Long("3")) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal == 3) {
+						CIMProperty<?> n[] = { new CIMProperty<Long>("SequenceNumber",
+								CIMDataType.SINT64_T, new Long("4")) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal == 4) {
+						CIMProperty<?> n[] = { new CIMProperty<Long>("SequenceNumber",
+								CIMDataType.SINT64_T, new Long("5")) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal == 5) {
+						CIMProperty<?> n[] = { new CIMProperty<Long>("SequenceNumber",
+								CIMDataType.SINT64_T, new Long("2")) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal == 7) {
+						CIMProperty<?> n[] = { new CIMProperty<Long>("SequenceNumber",
+								CIMDataType.SINT64_T, new Long("9")) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal >= 11 && seqNumVal <= 14) {
+						CIMProperty<?> n[] = { new CIMProperty<String>("SequenceContext",
+								CIMDataType.STRING_T, newCtx1) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal >= 15 && seqNumVal <= 18) {
+						CIMProperty<?> n[] = { new CIMProperty<String>("SequenceContext",
+								CIMDataType.STRING_T, null) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal >= 19 && seqNumVal <= 24) {
+						CIMProperty<?> n[] = {
+								new CIMProperty<String>("SequenceContext", CIMDataType.STRING_T,
+										newCtx2),
+								new CIMProperty<Long>("SequenceNumber", CIMDataType.SINT64_T,
+										new Long(seqNumVal - 19)) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal >= 25 && seqNumVal <= 27) {
+						CIMProperty<?> n[] = { new CIMProperty<String>("SequenceContext",
+								CIMDataType.STRING_T, null) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal == 28) {
+						CIMProperty<?> n[] = {
+								new CIMProperty<String>("SequenceContext", CIMDataType.STRING_T,
+										newCtx3),
+								new CIMProperty<Long>("SequenceNumber", CIMDataType.SINT64_T,
+										new Long("1")) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal == 29) {
+						CIMProperty<?> n[] = {
+								new CIMProperty<String>("SequenceContext", CIMDataType.STRING_T,
+										newCtx3),
+								new CIMProperty<Long>("SequenceNumber", CIMDataType.SINT64_T,
+										new Long("0")) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal == 30) {
+						CIMProperty<?> n[] = {
+								new CIMProperty<String>("SequenceContext", CIMDataType.STRING_T,
+										newCtx3),
+								new CIMProperty<Long>("SequenceNumber", CIMDataType.SINT64_T,
+										new Long("3")) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal == 31) {
+						CIMProperty<?> n[] = {
+								new CIMProperty<String>("SequenceContext", CIMDataType.STRING_T,
+										newCtx3),
+								new CIMProperty<Long>("SequenceNumber", CIMDataType.SINT64_T,
+										new Long("2")) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal == 32) {
+						CIMProperty<?> n[] = {
+								new CIMProperty<String>("SequenceContext", CIMDataType.STRING_T,
+										newCtx3),
+								new CIMProperty<Long>("SequenceNumber", CIMDataType.SINT64_T,
+										new Long("5")) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal == 33) {
+						CIMProperty<?> n[] = {
+								new CIMProperty<String>("SequenceContext", CIMDataType.STRING_T,
+										newCtx3),
+								new CIMProperty<Long>("SequenceNumber", CIMDataType.SINT64_T,
+										new Long("4")) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal == 34) {
+						CIMProperty<?> n[] = {
+								new CIMProperty<String>("SequenceContext", CIMDataType.STRING_T,
+										newCtx3),
+								new CIMProperty<Long>("SequenceNumber", CIMDataType.SINT64_T,
+										new Long("6")) };
+						indicationInst = indicationInst.deriveInstance(n);
+					}
+
+Java code snippet #2 tests starting with SC/SN off:
+					
+					CIMProperty<?> seqNumProp = indicationInst.getProperty("SequenceNumber");
+					Long seqNum = (Long) seqNumProp.getValue();
+					long seqNumVal = seqNum.longValue();
+					// 0-18 null context
+					// 19-34 new context, #'s 0-16
+					if (seqNumVal >= 0 && seqNumVal <= 18) {
+						CIMProperty<?> n[] = { new CIMProperty<String>("SequenceContext",
+								CIMDataType.STRING_T, null) };
+						indicationInst = indicationInst.deriveInstance(n);
+					} else if (seqNumVal >= 19 && seqNumVal <= 34) {
+						CIMProperty<?> n[] = { new CIMProperty<Long>("SequenceNumber",
+								CIMDataType.SINT64_T, new Long(seqNumVal - 19)) };
+						indicationInst = indicationInst.deriveInstance(n);
+					}

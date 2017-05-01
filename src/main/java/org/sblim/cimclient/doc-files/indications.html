@@ -1,0 +1,193 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+  <head>
+    <!--
+    *
+    * (C) Copyright IBM Corp. 2006, 2012
+    *
+    * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+    * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+    * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+    *
+    * You can obtain a current copy of the Eclipse Public License from
+    * http://www.opensource.org/licenses/eclipse-1.0.php
+    *
+    * @author : Alexander Wolf-Reber, IBM, a.wolf-reber@de.ibm.com
+    *
+    * Change History
+    * Flag       Date        Prog         Description
+    *-------------------------------------------------------------------------------
+    * 2003590    2008-06-30  blaschke-oss Change licensing from CPL to EPL
+    * 2799260    2009-06-01  raman_arora  Fix left over @author tag from Java5 upgrade
+    * 2882448    2009-10-21  blaschke-oss Add WBEMClientConstants from JSR48
+    * 2946113    2010-02-08  blaschke-oss First steps code snippet has compile errors
+    * 2972697    2010-03-18  blaschke-oss Fix spelling errors in HTML files
+    * 2990370    2010-04-22  blaschke-oss Development/unittest HTML out of date
+    * 3469210    2012-01-03  blaschke-oss Include reliable indications in HTML
+    * 3536398    2012-08-20  hellerda     Update HTML to reflect secure indication support
+    -->
+  </head>
+  <body style="background-color: white;">
+    <h1>Getting started with indications</h1>
+    <p> The prerequisite for receiving indications is at least one existing subscription on a CIMOM. It is out of the scope of this document to explain the creation of subscriptions. Please see the corresponding DMTF standards.
+    </p>
+    <p> The delivery of indications reverses the roles of client and server. The CIMOM acts as HTTP client, the SBLIM CIM Client for Java as an HTTP server. The indication delivery is asynchronous and completely independent from an open client-to-CIMOM connection.
+    </p>
+    <a id="setup" name="setup" /><h2>Setting up an indication listener</h2>
+    <p>The following code snippet illustrates how to set up a simple indication listener.</p>
+    <div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+      <div style="background-color: #f0f0f0; padding: 10px;">
+       <pre>
+/**
+ * Starts a indication listener that dumps every received indication to System.out
+ * @param port The TCP port to listen on
+ * @param ssl Set true if you want to listen on a secure (SSL) socket
+ * @return The indication listener instance. Call removeLister() to stop the listener.   
+ */ 
+private WBEMListener startIndicationListener(int pPort, boolean pSsl) throws IOException {
+
+  try {
+    WBEMListener listener = WBEMListenerFactory.getListener(WBEMClientConstants.PROTOCOL_CIMXML);
+    listener.addListener(new IndicationListener() {
+      public void indicationOccured(String pIndicationURL, CIMInstance pIndication) {
+        System.out.println("Indication received on: " + pIndicationURL + ":");
+        System.out.println(pIndication.toString());
+      }
+    }, pPort, pSsl ? "https" : "http");
+
+    return listener;
+
+    } catch (IOException e) {
+      System.err.println("Failed to bind socket to port "+pPort);
+      throw e;
+    }
+  }
+       </pre>
+      </div>
+    </div>
+   <p>This sample will listen for indications on the given socket. Every indication received 
+   is dispatched to the single registered <code>CIMListener</code> that prints the event 
+   details to <code>stdout</code>. In a real world application you would replace the 
+   <code>System.out.println()</code> with your indication processing code.</p> 
+   <p>In order to stop listening and free the socket just call <code>removeListener(int pPort)</code>.</p>
+   <p>The <code>WBEMListener</code> is a singleton that keeps a map of socket listeners keyed by port. On 
+   multi-homed systems it is possible to bind the listener to a given IP only. The <code>WBEMListenerSBLIM</code>
+   class offers an additional signature of <code>addListener()</code> that allows you to pass individual configuration
+   properties.</p>
+   <h2>Implementation Details</h2>
+   <p>When you start an indication listener you start a little HTTP server. This server has to fulfill the usual duties: wait for incoming connections,
+   handle them (also concurrently), parse the request, send a response, create a CIM indication and forward it to the corresponding indication listener from
+   your application.</p>
+   <p>These duties are handled by four layers, each of which runs in one or more separate threads (compare with picture).</p> 
+   <ul>
+     <li>The outermost layer is the HTTP server. It just listens for incoming
+         connections on the server socket, accepts them and pushes the connection socket in the connection queue.</li>
+     <li>The connection dispatcher monitors the connection queue and creates a task for each connection. The tasks are 
+         pushed into the task queue.</li>
+     <li>The handlers monitor the task queue and execute the task. The task will parse the request, send a response, create a CIM event and push the event
+         into the event queue. The handlers are controlled by a thread pool that creates and destroys them on demand. By default it might create up to 16 handlers
+         and will always keep at least one active.</li>
+     <li>The CIM event dispatcher monitors the event queue and forwards the event to the indication listener of the application.</li>
+   </ul>
+   <img src="indication_threading.png" alt="Threading model" />
+   <p>When you subscribe on multiple CIMOMs you have to be able to distinguish which CIMOM is the origin of a particular indication. This is not as easy as it
+   seems since an indication doesn't have sender information. Therefore the common way is to make the destination unique in the subscription. This can be done by
+   either using an individual port per subscription or by using an individual local path per subscription. The first option creates more overhead in the client
+   since we have to start a separate HTTP server for each port. Therefore we recommend using the second option.</p>
+   <h2>Configuration options</h2>
+   <p>We have five configuration options that allow you to fine tune the indication listener. All of them are coupled together and a wrong setting might harm your ability
+   to receive indications.<p>
+   <ul>
+     <li><em>sblim.wbem.listenerHttpTimeout</em>: Sets the socket timeout. CIMOMs that do not send data or keep hanging in between are disconnected after that time. 
+       This is a very important setting, because it controls how long a sender might block a handler thread. Increase that value only in a high latency environment.</li>
+     <li><em>sblim.wbem.listenerPoolMaxSize</em>: Sets the maximum number of handlers the thread pool will create on heavy load. It's not recommended to go below two here
+       because that makes the client too vulnerable against a blocked handler.</li>  
+     <li><em>sblim.wbem.listenerPoolMinSize</em>: Sets the number of handlers that are kept alive even when we have no load at all. It is recommended to use at least two
+       when the backlog is not zero. Otherwise the client is again too vulnerable against blocked handlers.</li>
+     <li><em>sblim.wbem.listenerBacklog</em>: Sets the number of queued connections that are tolerated before the thread pool will create a new handler. Increasing this
+       setting makes the thread pool more &quot;relaxed&quot; keeping the number of handlers a bit lower and avoiding many handler creations &amp; destructions. You should 
+       combine a non-zero setting with a minimal pool size of two or more in order to avoid vulnerability against a blocked handler.</li> 
+     <li><em>sblim.wbem.listenerHandlerMaxIdle</em>: Sets the time a handler might be idle before it will be killed by the thread pool. Lower values will make the thread
+       pool more &quot;nervous&quot; closing idle handlers fast. Higher values make it more &quot;relaxed&quot; keeping handlers open and avoiding many handler creations
+       &amp; destructions</li>
+   </ul>
+   <h3>Examples for reasonable combinations:</h3>
+   <table border="1">
+     <tr><th>HTTP timeout</th><th>minimum pool size</th><th>maximum pool size</th><th>backlog</th><th>idle timeout</th><th>remarks</th></tr>
+     <tr><td align="center">10s</td><td align="center">2</td><td align="center">8</td><td align="center">2</td><td align="center">30s</td><td>Default setting. Will keep number of handlers low &amp; stable. Aggressive HTTP timeout and two handlers always open will keep vulnerability low.</td></tr>        
+     <tr><td align="center">60s</td><td align="center">0</td><td align="center">8</td><td align="center">0</td><td align="center">10s</td><td>More dynamic handler allocation. Will destroy all handlers fast when idling and create them without delay on traffic. Allows higher HTTP timeout.</td></tr>        
+     <tr><td align="center">60s</td><td align="center">0</td><td align="center">8</td><td align="center">0</td><td align="center">120s</td><td>Similar to default but keeps handler count stable by long idle timeout instead of backlog. Makes it less vulnerable against blocking, but keeps handler open long after traffic peeks. Needs on average more handlers than default.</td></tr>
+     <tr><td align="center">10s</td><td align="center">0</td><td align="center">2</td><td align="center">0</td><td align="center">10s</td><td>Resource saving: maximum of two handlers, aggressive HTTP timeout, short idle timeout. Will keep number of handlers low but is heavily creating &amp; destroying its handlers.</td></tr>        
+   </table>
+   <h2>Reliable Indications</h2>           
+   <p>Reliable indication support, as defined by DMTF Indications Profile [DSP1054], is included in the SBLIM CIM Client for Java beginning with version 2.1.9.  The gist of
+   reliable indication support is for indications to be delivered to the listener in the order intended by the CIMOM, NOT the order which they arrive at the Client.  In other
+   words, if the CIMOM sends indications [#4,#5,#6] but network issues cause them to arrive at the Client as [#5,#6,#4], the Client will deliver them to the listener as [#4,#5,#6].
+   <p>When reliable indication support is enabled (the default is disabled), the Client is responsible for determining when to dispatch reliable indications, which includes
+   queuing unexpected indications in either a hash table or linked list, caching all indications for the duration of their sequence identifier lifetime, and logging missing,
+   duplicate and out-of-order indications.
+   <p>A reliable indication must contain both the SequenceContext and SequenceNumber properties, the latter of which is used to deliver indications to the listener in order
+   of increasing value.  The sequence identifier lifetime is defined as:
+   <div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+     <div style="background-color: #f0f0f0; padding: 10px;">
+       <pre>
+DeliveryRetryAttempts * DeliveryRetryInterval * 10
+       </pre>
+     </div>
+   </div>
+   where DeliveryRetryAttempts and DeliveryRetryInterval are properties in the CIM_IndicationService instance on the CIMOM dispatching the indications.
+   <p>There are four configuration options that allow you to control reliable indication handling:
+   <ul>
+     <li><em>sblim.wbem.listenerEnableReliableIndications</em>: Enables or disables reliable indication support.  If set to true, indications are queued by the Client in a linked list or hash table and delivered in order to the listener .  If set to false, indications are passed directly to the listener.</li>
+     <li><em>sblim.wbem.listenerDeliveryRetryAttempts</em>: Sets the default value to use for the CIM_IndicationService DeliveryRetryAttempts property.  This value should match the value of the property of the CIM_IndicationService instance on the CIMOM dispatching the indications.</li>
+     <li><em>sblim.wbem.listenerDeliveryRetryInterval</em>: Sets the default value to use for the CIM_IndicationService DeliveryRetryInterval property.  This value should match the value of the property of the CIM_IndicationService instance on the CIMOM dispatching the indications.</li>
+     <li><em>sblim.wbem.listenerReliableIndicationHashtableCapacity</em>: Sets the default value to use for the reliable indication handler's initial hash table capacity.  A value of 0 indicates use a linked list instead.  Linked lists are better suited for a small number of listener destinations per WBEMListener while hash tables are better suited for a large number.</li>
+   </ul>
+   <a id="example2" name="example2" />
+   <p>The following code snippet illustrates how to set up a simple indication listener with reliable indication support enabled.</p>
+   <div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+     <div style="background-color: #f0f0f0; padding: 10px;">
+       <pre>
+/**
+ * Starts a indication listener that dumps every received indication to System.out
+ * @param port The TCP port to listen on
+ * @param ssl Set true if you want to listen on a secure (SSL) socket
+ * @return The indication listener instance. Call removeLister() to stop the listener.   
+ */ 
+private WBEMListener startIndicationListener(int pPort, boolean pSsl) throws IOException {
+
+  try {
+    WBEMListener listener = WBEMListenerFactory.getListener(WBEMClientConstants.PROTOCOL_CIMXML);
+    // Cast WBEMListener to WBEMListenerSBLIM to get access to the addListener() method that
+    // accepts properties - this method is not part of the JSR48 standard, but is a SBLIM addition
+    WBEMListenerSBLIM SBLIMlistener = (WBEMListenerSBLIM) listener;
+
+    // Enable reliable indications using 2 retries at intervals of 30 seconds
+    Properties props = new Properties();
+    props.setProperty("sblim.wbem.listenerEnableReliableIndications", "true");
+    props.setProperty("sblim.wbem.listenerDeliveryRetryAttempts", "2");
+    props.setProperty("sblim.wbem.listenerDeliveryRetryInterval", "30");
+		
+    SBLIMlistener.addListener(new IndicationListener() {
+      public void indicationOccured(String pIndicationURL, CIMInstance pIndication) {
+        System.out.println("Indication received on: " + pIndicationURL + ":");
+        System.out.println(pIndication.toString());
+      }
+    }, pPort, pSsl ? "https" : "http", null, props);
+
+    return listener;
+
+    } catch (IOException e) {
+      System.err.println("Failed to bind socket to port "+pPort);
+      throw e;
+    }
+  }
+        </pre>
+      </div>
+    </div>   
+    <p>The properties can also be set in the properties file itself, in which case the code would be identical to the first snippet above.  However, that would enable reliable
+    indication support and set the attempts/interval for all listeners whereas this code snippet enables support and sets the attempts/interval for this particular listener only.
+    <p><b>NOTE:</b>If reliable indication support is enabled but the CIMOM does not send reliable indications (required properties missing), the indications are passed directly
+    to the listener.
+  </body>
+</html>

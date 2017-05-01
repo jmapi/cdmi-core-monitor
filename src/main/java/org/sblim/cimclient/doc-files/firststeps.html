@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+  <head>
+<!--
+ *
+ * (C) Copyright IBM Corp. 2006, 2010
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Alexander Wolf-Reber, IBM, a.wolf-reber@de.ibm.com
+ *
+ * Change History
+ * Flag       Date        Prog         Description
+ *-------------------------------------------------------------------------------
+ * 2003590    2008-06-30  blaschke-oss Change licensing from CPL to EPL
+ * 2799260    2009-06-01  raman_arora  Fix left over @author tag from Java5 upgrade
+ * 2882448    2009-10-21  blaschke-oss Add WBEMClientConstants from JSR48
+ * 2946113    2010-02-08  blaschke-oss First steps code snippet has compile errors
+ * 2990370    2010-04-22  blaschke-oss Development/unittest HTML out of date
+-->
+  </head>
+  <body style="background-color: white;">
+
+    <h1>First Steps</h1>
+    <p>The entry point of the SBLIM CIM Client for Java is the <a href="../../../../javax/wbem/client/WBEMClient.html"><code>WBEMClient</code></a> 
+    class. An instance of this class encapsulates a client connection to a CIMOM. The API represents the WBEM operations. 
+    <code>WBEMClient</code> is just an interface, for instantiation call 
+    <a href="../../../../javax/wbem/client/WBEMClientFactory.html#getClient(java.lang.String)"><code>WBEMClientFactory.getClient()</code></a>.</p> 
+    <p>Other quite important classes are found in the <a href="../../../../javax/cim/package-summary.html"><code>javax.cim</code></a> 
+    package that contains the Java representations of all CIM objects. </p> 
+    <p>The following code snippet opens a connection and enumerates all <code>CIM_RegisteredProfile</code> instances in the 
+    root/cimv2 namespace.</p>
+
+    <div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+      <div style="background-color: #f0f0f0; padding: 10px;">
+       <pre>
+			
+URL cimomUrl = new URL("https://127.0.0.1:5989");
+String user = "youruser";
+String pw = "yourpassword";
+
+final WBEMClient client = WBEMClientFactory.getClient(WBEMClientConstants.PROTOCOL_CIMXML);
+final CIMObjectPath path = new CIMObjectPath(cimomUrl.getProtocol(),
+		cimomUrl.getHost(), String.valueOf(cimomUrl.getPort()), null, null, null);
+final Subject subject = new Subject();
+subject.getPrincipals().add(new UserPrincipal(user));
+subject.getPrivateCredentials().add(new PasswordCredential(pw));
+
+try {		
+  client.initialize(path, subject, Locale.getAvailableLocales());
+} catch (Exception e) {
+  e.printStackTrace();
+}
+
+try {
+  final CloseableIterator&lt;CIMObjectPath&gt; iterator = client.enumerateInstanceNames(new CIMObjectPath(
+    "CIM_RegisteredProfile", "root/cimv2"));
+  try {
+    while (iterator.hasNext()) {
+      final CIMObjectPath pathIter = iterator.next();
+      System.out.println(pathIter.toString());
+    }
+  } finally {
+    iterator.close();
+  }
+} catch (WBEMException e) {
+  e.printStackTrace();
+}
+        </pre>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+<CIM CIMVERSION="2.0" DTDVERSION="2.0">
+	<MESSAGE ID="2" PROTOCOLVERSION="1.0">
+		<SIMPLEEXPREQ>
+			<EXPMETHODCALL NAME="ExportIndication">
+				<EXPPARAMVALUE NAME="NewIndication">
+					<INSTANCE CLASSNAME="CIM_InstCreation">
+						<QUALIFIER NAME="Indication" TYPE="boolean" OVERRIDABLE="false" TOSUBCLASS="false" >
+							<VALUE>true</VALUE>
+						</QUALIFIER>
+						<QUALIFIER NAME="Version" TYPE="string" OVERRIDABLE="false" TOSUBCLASS="false" >
+							<VALUE>2.6.0</VALUE>
+						</QUALIFIER>
+						<QUALIFIER NAME="Description" TYPE="string" OVERRIDABLE="false" TOSUBCLASS="false" >
+							<VALUE>CIM_InstCreation notifies when a new instance is created.</VALUE>
+						</QUALIFIER>
+						<PROPERTY NAME="SourceInstance" TYPE="string" CLASSORIGIN="CIM_InstIndication" >
+							<QUALIFIER NAME="Required" TYPE="boolean" OVERRIDABLE="false" TOSUBCLASS="false" >
+								<VALUE>true</VALUE>
+							</QUALIFIER>
+							<QUALIFIER NAME="Description" TYPE="string" OVERRIDABLE="false" TOSUBCLASS="false" >
+								<VALUE>A copy of the instance that changed to generate the Indication.  SourceInstance contains the current values of the properties selected by the Indication Filter&apos;s Query.  In the case of CIM_InstDeletion, the property values are copied before the instance is deleted.</VALUE>
+							</QUALIFIER>
+							<QUALIFIER NAME="EmbeddedObject" TYPE="boolean" OVERRIDABLE="false" TOSUBCLASS="false" >
+								<VALUE>true</VALUE>
+							</QUALIFIER>
+							<VALUE TYPE="string">CIM_ListenerDestinationCIMXML.SystemName=&quot;9.155.82.151&quot;,SystemCreationClassName=&quot;CIM_ComputerSystem&quot;,Name=&quot;ECUTE CIM Explorer f0505557-9ef6-4965-8452-eeb28a6fb037&quot;,CreationClassName=&quot;CIM_ListenerDestinationCIMXML&quot;</VALUE>
+						</PROPERTY>
+						<PROPERTY NAME="IndicationIdentifier" TYPE="string" CLASSORIGIN="CIM_Indication" >
+							<QUALIFIER NAME="Description" TYPE="string" OVERRIDABLE="false" TOSUBCLASS="false" >
+								<VALUE>An identifier for the Indication.  This property is similar to a key value in that it can be used for identification, when correlating Indications (see the CorrelatedIndications array).  Its value SHOULD be unique as long as Alert correlations are reported, but MAY be reused or left NULL if no future Indications will reference it in their CorrelatedIndications array.</VALUE>
+							</QUALIFIER>
+							<QUALIFIER NAME="MappingStrings" TYPE="string" OVERRIDABLE="false" TOSUBCLASS="false" >
+								<VALUE.ARRAY>
+									<VALUE>Recommendation.ITU|X733.Notification identifier</VALUE>
+								</VALUE.ARRAY>
+							</QUALIFIER>
+							<VALUE>%_ID_%</VALUE>
+						</PROPERTY>
+						<PROPERTY.ARRAY NAME="CorrelatedIndications" TYPE="string" CLASSORIGIN="CIM_Indication" >
+							<QUALIFIER NAME="Description" TYPE="string" OVERRIDABLE="false" TOSUBCLASS="false" >
+								<VALUE>A list of IndicationIdentifiers whose notifications are correlated with (related to) this one.</VALUE>
+							</QUALIFIER>
+							<QUALIFIER NAME="MappingStrings" TYPE="string" OVERRIDABLE="false" TOSUBCLASS="false" >
+								<VALUE.ARRAY>
+									<VALUE>Recommendation.ITU|X733.Correlated notifications</VALUE>
+								</VALUE.ARRAY>
+							</QUALIFIER>
+						</PROPERTY.ARRAY>
+						<PROPERTY NAME="IndicationTime" TYPE="datetime" CLASSORIGIN="CIM_Indication" >
+							<QUALIFIER NAME="Description" TYPE="string" OVERRIDABLE="false" TOSUBCLASS="false" >
+								<VALUE>The time and date of creation of the Indication.  The property may be set to NULL if the entity creating the Indication is not capable of determing this information.  Note that IndicationTime may be the same for two Indications that are generated in rapid succession.</VALUE>
+							</QUALIFIER>
+							<VALUE TYPE="datetime">20070202075335.000666-000</VALUE>
+						</PROPERTY>
+					</INSTANCE>
+				</EXPPARAMVALUE>
+			</EXPMETHODCALL>
+		</SIMPLEEXPREQ>
+
+	</MESSAGE>
+</CIM>

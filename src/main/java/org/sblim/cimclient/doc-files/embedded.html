@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+  <head>
+<!--
+ *
+ * (C) Copyright IBM Corp. 2006, 2010
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Alexander Wolf-Reber, IBM, a.wolf-reber@de.ibm.com
+ *
+ * Change History
+ * Flag       Date        Prog         Description
+ *-------------------------------------------------------------------------------
+ * 2003590    2008-06-30  blaschke-oss Change licensing from CPL to EPL
+ * 2799260    2009-06-01  raman_arora  Fix left over @author tag from Java5 upgrade
+ * 2957387    2010-03-03  blaschke-oss EmbededObject XML attribute must not be all uppercases
+ * 2972697    2010-03-18  blaschke-oss Fix spelling errors in HTML files
+ * 2990370    2010-04-22  blaschke-oss Development/unittest HTML out of date
+-->
+  </head>
+  <body style="background-color: white;">
+
+    <h1>Embedded Object support</h1>
+    
+    <p>Embedded objects are CIM instances or classes embedded in a property,
+       parameter or return value</p>
+    
+    <h2>Creation of Embedded Object Java CIM elements from application</h2>
+    <p>If the CIM object is a valued element, its value has to be a CIMClass or 
+       CIMInstance instance and its type has to be CIMDataType.CLASS_T or 
+       CIMDataType.OBJECT_T correspondingly. Array types and values are 
+       allowed for CIMProperty and CIMParameter.</p>
+    <p>In case of valued elements the application doesn't have to add the 
+       EmbeddedObject qualifier directly since that's placed into the outgoing 
+       XML stream automatically.</p>
+    <p>If the CIM object is not valued or contains a null value the application 
+       has to set the type to CIMDataType.STRING_T and has to add the 
+       EmbeddedObject qualifier directly.</p>
+
+    <h2>Extracting received Embedded Objects from the application</h2>
+    <p>In the application embedded objects appear in CIMValuedElements with 
+       CIMDataType.CLASS_T or CIMDataType.OBJECT_T types and with CIMClass and 
+       CIMInstance values correspondingly. Similar array constructs can appear 
+       too.</p>
+
+    <h2>In CIM elements</h2>
+    <p>Embedded objects are supported with the following CIM-XML elements:</p>
+    <ul>
+        <li>PROPERTY</li>
+        <li>PROPERTY.ARRAY</li>
+        <li>PARAMVALUE</li>
+        <li>RETURNVALUE</li>
+        <li>PARAMETER</li>
+        <li>PARAMETER.ARRAY</li>
+        <li>METHOD</li>
+    </ul>
+    <p>From javax.cim perspective these are the following classes:<br />
+       CIMProperty, CIMClassProperty, CIMArgument, CIMParameter, CIMMethod 
+       (RETURNVALUE is mapped into java.lang.Object which can be CIMClass or 
+        CIMInstance in case of Embedded Object return value).</p>
+        
+    <h2>Embedded Object encoding in outgoing XML streams (requests)</h2>
+    <p>All embedded object CIM-XML elements which can have Qualifiers are 
+       encoded by adding the EmbeddedObject qualifier. The rest of the elements are 
+       encoded by the EmbeddedObject="object" XML attribute.</p>
+    <p>Elements encoded by EmbeddedObject qualifier:</p>
+    <ul>
+        <li>PROPERTY</li>
+        <li>PROPERTY.ARRAY</li>
+        <li>PARAMETER</li>
+        <li>PARAMETER.ARRAY</li>
+        <li>METHOD</li>
+    </ul>
+    <p>Elements encoded by EmbeddedObject attribute:</p>
+    <ul>
+        <li>PARAMVALUE</li>
+    </ul>
+    <p>Building of RETURNVALUE is not implemented (it's the CIMOM's task).</p>
+    
+    <h2>Embedded Object recognition in CIM-XML responses</h2>
+    <p>Embedded Object can be recognized by EmbeddedObject qualifier or EmbeddedObject attribute.</p>
+    <p>Embedded Object elements recognized by EmbeddedObject attribute:</p>
+    <ul>
+        <li>PROPERTY</li>
+        <li>PROPERTY.ARRAY</li>
+        <li>PARAMVALUE</li>
+        <li>RETURNVALUE</li>
+    </ul>
+    <p>Embedded Object elements recognized by EmbeddedObject qualifier:</p>
+    <ul>
+        <li>PROPERTY</li>
+        <li>PROPERTY.ARRAY</li>
+        <li>PARAMETER</li>
+        <li>PARAMETER.ARRAY</li>
+        <li>METHOD</li>
+    </ul>
+  </body>
+</html>

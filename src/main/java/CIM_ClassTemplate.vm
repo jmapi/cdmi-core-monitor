@@ -1,0 +1,95 @@
+public class ${cls.Name} {
+
+    /**
+     * Itererate all ${cls.Name} instances.
+     *
+     * @param client A CIM Client used to connect to the CIMOM.
+     * @return An Array of ${cls.Name} instances.
+     * @throws WBEMException Exception while getting instances.
+     */
+    public static ${cls.Name} [] getInstances(WBEMClient client, String nameSpace)
+                                    throws WBEMException {
+        ${cls.Name} [] result = new ${cls.Name} [0];
+      CloseableIterator iter = client.enumerateInstances(${cls.Name}.makePath(nameSpace),
+                      true, false, false, null);
+      try{
+      	   result = parseResult(client, iter);
+      }catch(Exception e){
+                  if(e instanceof WBEMException)
+        	  throw (WBEMException)e;
+      }finally{
+                    iter.close();
+      }
+         
+        return result;        
+}
+
+    /**
+     * Remove this CIM Instance on the target CIM server.     *
+     * @throws WBEMException Exception while deleting instance.
+     */
+    public void deleteInstance() throws WBEMException {
+        if (m_cop != null) {
+            m_client.deleteInstance(this.m_cop);
+        } else {
+            throw new RuntimeException("");
+        }
+}
+
+    /**
+     * Itererate all ${cls.Name} instances that are associated with the
+     * specified class through the specified CIM Association.
+     *
+     * @param client A CIM Client used to connect to the CIMOM.
+     * @param sourcePath The CIMObjectPath of the source Instance.
+     * @param associationClass The Class Name of the CIM Association.
+     * @return An Array of ${cls.Name} instances.     *
+     * @throws WBEMException Exception while getting instances.
+     */
+    public static ${cls.Name}[] getAssociatedInstances(WBEMClient client,
+                                                     CIMObjectPath sourcePath,
+                                                     String associationClass)
+                                              throws WBEMException {
+        ${cls.Name}[] result = new ${cls.Name}[0];
+        CloseableIterator iter = client.associators(sourcePath, associationClass,
+                                           "${cls.Name}", null, null, false, false, null);
+        try{
+            result = parseResult(client, iter);
+        }catch(Exception e){
+	   if(e instanceof WBEMException)
+        	   throw (WBEMException)e;
+        }finally{
+    	   iter.close();
+        }
+         
+        return result;
+    }
+
+/**
+     * Itererate all ${cls.Name} instances that are associated with the
+     * specified class through the specified CIM Association.
+     *
+     * @param client A CIM Client used to connect to the CIMOM.
+     * @param sourcePath The CIMObjectPath of the source Instance.
+     * @return An Array of ${cls.Name} instances.
+     * @throws WBEMException Exception while getting instances.
+     */
+    public static ${cls.Name}[] getAssociationInstances(WBEMClient client,
+                                                     CIMObjectPath sourcePath)
+                                              throws WBEMException {
+        ${cls.Name}[] result = new ${cls.Name}[0];
+        CloseableIterator iter = client.references(sourcePath, 
+                                           "${cls.Name}", null, false, false, null);
+        
+        try{
+            result = parseResult(client, iter);
+        }catch(Exception e){
+	   if(e instanceof WBEMException)
+        	   throw (WBEMException)e;
+        }finally{
+    	   iter.close();
+        }
+         
+        return result;        
+}
+}

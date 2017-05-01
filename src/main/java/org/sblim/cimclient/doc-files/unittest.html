@@ -1,0 +1,622 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+  <head>
+<!--
+ *
+ * (C) Copyright IBM Corp. 2006, 2013
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Alexander Wolf-Reber, IBM, a.wolf-reber@de.ibm.com
+ *
+ * Change History
+ * Flag       Date        Prog         Description
+ *-------------------------------------------------------------------------------
+ * 2003590    2008-06-30  blaschke-oss Change licensing from CPL to EPL
+ * 2799260    2009-06-01  raman_arora  Fix left over @author tag from Java5 upgrade
+ * 2957387    2010-03-03  blaschke-oss EmbededObject XML attribute must not be all uppercases
+ * 2972697    2010-03-18  blaschke-oss Fix spelling errors in HTML files
+ * 2990370    2010-04-22  blaschke-oss Development/unittest HTML out of date
+ * 2994252    2010-04-30  blaschke-oss CIMDateTimeInterval.getTotalMilliseconds() not unit tested
+ * 3293248    2011-05-03  blaschke-oss Support for CIM_ERROR instances within ERROR
+ * 3397922    2011-08-30  blaschke-oss support OctetString
+ * 3484014    2012-02-03  blaschke-oss Add LogAndTraceBroker.isLoggable for message/trace
+ * 3510090    2012-03-23  blaschke-oss Fix CIMObjectPath.toString() inconsistencies
+ * 3513353    2012-03-30  blaschke-oss TCK: CIMDataType arrays must have length >= 1
+ * 3466280    2012-04-23  blaschke-oss get instance failure for CIM_IndicationSubscription
+ * 3522904    2012-05-02  blaschke-oss Add new API WBEMClientSBLIM.isActive()
+ * 3529062    2012-05-23  blaschke-oss WBEMListenerFactory should return new instance
+ * 3554738    2012-08-16  blaschke-oss dump CIM xml by LogAndTraceBroker.trace()
+ * 3536399    2012-08-25  hellerda     Add client/listener peer authentication properties
+ * 3572993    2012-10-01  blaschke-oss parseDouble("2.2250738585072012e-308") DoS vulnerability
+ * 3592502    2012-12-04  blaschke-oss Enhance CIMDataType unit test
+ * 3596303    2013-01-04  blaschke-oss windows http response WWW-Authenticate: Negotiate fails
+ * 3598613    2013-01-11  blaschke-oss different data type in cim instance and cim object path
+ *    2616    2013-02-23  blaschke-oss Add new API WBEMClientSBLIM.sendIndication()
+ *    2636    2013-05-08  blaschke-oss Nested embedded instances cause CIMXMLParseException
+ *    2637    2013-05-09  blaschke-oss Add nested embedded instance builder test
+ *    2635    2013-05-16  blaschke-oss Slowloris DoS attack for CIM indication listener port
+ *    2151    2013-08-20  blaschke-oss gzip compression not supported
+ *    2660    2013-09-04  blaschke-oss CIMObjectPath.equalsModelPath same as equals
+ *    2696    2013-10-29  blaschke-oss parseIRETURNVALUE ignores VALUE and VALUE.ARRAY
+ *    2714    2013-11-22  blaschke-oss Add detailed CIM-XML parser test based on DSP0201 2.4
+-->
+  </head>
+  <body style="background-color: white;">
+
+    <h1>Unit Test Coverage</h1>
+    
+    <p>The SBLIM CIM Client for Java ships with a large collection of around 200
+       unit tests. Whenever you the "all" target is build with ant the complete
+       unit test suite will be executed. This document describes what is covered
+       by these tests.</p>
+    <p>In addition to unit tests we have a function test package. This is not
+       yet published or documented, but will be in one of the next releases.</p>
+    <p>The unit tests are all self-contained, there's is no external dependency.
+       In contradiction our function test is executed against various CIMOM 
+       backends.</p>
+    <h2>The Test Cases</h2>
+    <h3>wbem.CloseableIteratorTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+        <tr><td>testEnumerateClassesPULL/SAX/DOM</td>
+            <td>Parses a saved enumerateClasses XML response, iterates over it and
+            checks that it matches with the reference data.</td></tr>
+        <tr><td>testEnumerateClassesErrorPULL/SAX/DOM</td>
+            <td>Parses a saved enumerateClasses XML response that contains CIM_Error
+            instances within an ERROR node, checks that it matches with the reference
+            data.</td></tr>
+        <tr><td>testClosePULL/SAX/DOM</td>
+            <td>Starts iterating over an enumerateClasses XML response and closes, the
+            iterator before the last element is iterated. The testcase fails if the
+            next CloseableIterator.hasNext() returns true.</td></tr>
+    </table>
+	<h3>wbem.XMLHostStrTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+        <tr><td>testSAX/DOM</td>
+            <td>Checks that XMLHostStr is integrated well into the XML parsers.
+            </td></tr>
+        <tr><td>test</td>
+            <td>Tests XMLHostStr directly with a large number of sample data.</td></tr>
+    </table>
+    <h3>wbem.ParserTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testEnumClassesDOM/SAX/PULL</td>
+        <td>Builds an enumerateClasses XML response from sample data, than parses it
+        and checks that it matches with the sample data.</td></tr>
+    
+    <tr><td>testEnumInstancesDOM/SAX/PULL</td>
+        <td>Builds an enumerateInstances XML response from sample data, than parses
+        it and checks that it matches with the sample data.</td></tr>
+        
+    <tr><td>testAssociatorClassNamesDOM/SAX/PULL</td>
+        <td>Builds an associatorClassNames XML response from sample data, than
+        parses it and checks that it matches with the sample data.</td></tr>
+    
+    <tr><td>testAssociatorInstanceNamesDOM/SAX/PULL</td>
+        <td>Builds an associatorInstanceNames XML response from sample data, than
+        parses it and checks that it matches with the sample data.</td></tr>
+    
+    <tr><td>testAssocClassesDOM/SAX/PULL</td>
+        <td>Builds an associatorClassNames XML response from sample data, than
+        parses it and checks that it matches with the sample data.</td></tr>
+    
+    <tr><td>testAssocInstancesDOM/SAX/PULL</td>
+        <td>Builds an associatorInstances XML response from sample data, than
+        parses it and checks that it matches with the sample data.</td></tr>
+    
+    <tr><td>testEnumQualiTypesDOM/SAX/PULL</td>
+        <td>Builds an enumerateQualifierTypes XML response from sample data, than
+        parses it and checks that it matches with the sample data.</td></tr>
+    <tr><td>testMethodRspSAX/DOM</td>
+    	<td>Builds MethodResponse XML data from sample data, than parses it and
+    	checks that it matches with the sample data.</td></tr>
+    <tr><td>testSVCMethodRsp0SAX/DOM</td>
+    	<td>Parses a hand edited SVC MethodResponse XML file and checks that it
+    	matches with the sample data.</td></tr>
+    <tr><td>testSVCMethodRspSmpl0SAX/DOM</td>
+    	<td>Parses a captured SVC MethodResponse XML file and checks that it
+    	matches with the sample data.</td></tr>
+    </table>
+
+<h3>wbem.SVCTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testGetClassSAX/PULL/DOM</td>
+    	<td>Parses a hand made SVC getClass() response XML file and checks that it
+    	matches with the sample data.</td></tr>
+    <tr><td>testGetClassSAX/PULL/DOM</td>
+    	<td>Parses a hand made SVC enumerateQualifierTypes() response XML file and
+    	checks that it matches with the sample data.</td></tr>
+   	</table>
+        
+<h3>wbem.EmbeddedObjParsingTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testGetInstanceDOM/SAX/PULL</td>
+        <td>Parses a getInstance XML response which contains Embedded Objects, than
+        checks that it matches with the sample data.</td></tr>
+         
+    <tr><td>testNegativeGetInstanceDOM/SAX/PULL</td>
+        <td>Parses a getInstance XML response which contains an Embedded class with
+        an EmbeddedObject="instance" attribute, if the parsing doesn't throw an
+        Exception the testcase fails.</td></tr>
+        
+    <tr><td>testGetClassDOM/SAX/PULL</td>
+        <td>Parses a getClass XML response which contains Embedded Objects, than
+        checks that it matches with the sample data.</td></tr>
+        
+    <tr><td>testMethodRsp</td>
+        <td>Parses a methodResponse XML request, with SAX, which contains Embedded Objects, than
+        checks that it matches with the sample data.</td></tr>
+    
+    <tr><td>testMethodRspDOM</td>
+        <td>Parses a methodResponse XML request, with DOM, which contains Embedded Objects, than
+        checks that it matches with the sample data.</td></tr>
+    
+    <tr><td>testSVCMethodRspSAX/DOM</td>
+        <td>Checks that the XML parsers are able to parse SVC CIMOM's wrongly built
+        RETURNVALUE types as CIMDataType.STRING_T.</td></tr>
+    </table>
+
+<h3>wbem.EmbeddedObjBuildingTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testCIMClass</td>
+        <td>Builds an enumerateClasses XML response from a sample class, than parses
+        the built XML and checks that the result is matched with the sample
+        class.</td></tr>
+    </table>
+    
+<h3>wbem.Bug3466280Test</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testEnumInstancesSAX/PULL/DOM</td>
+    	<td>Parses a hand made enumerateInstances() response XML file and checks
+    	that the INSTANCENAME elements contain or do not contain a namespace as
+    	expected.</td></tr>
+   	</table>    
+    
+<h3>wbem.Bug3598613Test</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testEnumInstancesSAX/PULL/DOM</td>
+    	<td>Parses a hand made enumerateInstances() response XML file and checks
+    	that the numeric key data types of an instance's CIMObjectPath match the
+    	corresponding keys in the instance's CIMProperty[] when the
+    	sblim.wbem.synchronizeNumericKeyDataTypes is set to true.</td></tr>
+   	</table>   
+   	
+<h3>wbem.NestedEmbInstTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testEnumInstancesSAX/PULL/DOM</td>
+    	<td>Parses a hand made enumerateInstances() response XML file and checks
+    	that the embedded instances (that is, an instance within an instance
+    	within an instance) are as expected.</td></tr>
+    <tr><td>testNestedEmbInstBuilder</td>
+    	<td>Builds createInstance() request XML files and checks that the
+    	embedded instances (that is, an instance within an instance within an
+    	instance) are as expected.</td></tr>
+   	</table>      	
+
+<h3>wbem.IReturnValueTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testSAX/PULL/DOM</td>
+    	<td>Parses a hand made enumerateInstanceNames() response XML string and
+    	checks that the IRETURNVALUE element is parsed properly when it contains
+    	a VALUE, VALUE.ARRAY and VALUE.REFERENCE child element.</td></tr>
+   	</table>   
+   	
+<h3>wbem.DSP0201Test</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testValidCIMXMLRequests</td>
+    	<td>Parses over 140 hand made valid request XML strings with each of
+    	the three parsers and checks that the expected "not-a-response" parsing
+    	exception is thrown.</td></tr>
+    <tr><td>testInvalidCIMXMLRequests</td>
+    	<td>Parses over 135 hand made invalid request XML strings with each of
+    	the three parsers and checks that the expected parsing exception is
+    	thrown.</td></tr>
+    <tr><td>testValidCIMXMLResponses</td>
+    	<td>Parses over 250 hand made valid response XML strings with each of
+    	the three parsers and checks that no parsing exception is thrown.</td></tr>
+    <tr><td>testInvalidCIMXMLResponses</td>
+    	<td>Parses over 175 hand made invalid response XML strings with each of
+    	the three parsers and checks that the expected parsing exception is
+    	thrown.</td></tr>
+   	</table>   
+
+<h3>wbem.WBEMClientTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testClientIsActive</td>
+    	<td>Tests isActive before initialization, after initialization but before
+    	closing, and after closing.</td></tr>
+    <tr><td>testValidSendIndication</td>
+        <td>Tests sendIndication to make sure indications are properly sent by the
+        client for valid invocations.</td></tr>
+    <tr><td>testInvalidSendIndication</td>
+        <td>Tests sendIndication to make sure exceptions are properly thrown by the
+        client for invalid invocations.</td></tr>
+    <tr><td>testClientGzipEncoding</td>
+        <td>Tests request/response to make sure gzip encoding of CIM-XML works as
+        expected.</td></tr>
+   	</table> 
+   	
+<h3>wbem.WBEMListenerTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testListenerInstance</td>
+    	<td>Tests that WBEMListenerFactory returns unique instances of
+    	WBEMListener.</td></tr>
+    <tr><td>testListenerBlockedIPs</td>
+    	<td>Tests WBEMListenerSBLIM methods getBlockedIPs and
+    	setBlockedIPs.</td></tr>
+   	</table>
+   	
+<h3>cim.CIMDataTypeTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testScalarDataTypes</td>
+        <td>Tests scalar CIMDataTypes (UINT8_T, UINT16_T, etc.) along with
+        CIMHelper.ScalarDataType.</td></tr>
+    <tr><td>testUnboundedArrayDataTypes</td>
+        <td>Tests unbounded array CIMDataTypes (UINT8_ARRAY_T, UINT16_ARRAY_T,
+        etc.) along with CIMHelper.UnboundedArrayDataType.</td></tr>
+    <tr><td>testBoundedArrayDataTypes</td>
+        <td>Tests bounded array CIMDataTypes (UINT8_ARRAY_T, UINT16_ARRAY_T,
+        etc.) along with CIMHelper.UnboundedArrayDataType.</td></tr>
+    <tr><td>testReferenceType</td>
+        <td>Tests scalar, bounded array and unbounded array reference CIMDataTypes
+        with valid class name, empty class name and null class name.</td></tr>
+    <tr><td>testGetDataType</td>
+        <td>Tests the static getDataType method.</td></tr>
+    </table>        
+ 
+<h3>cim.CIMDateTimeAbsoluteTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testCalendarConstructor</td>
+        <td>Builds up a CIMDateTimeAbsolute with the Calendar constructor, than
+        checks that the values by the getters are matched with the values
+        contained in the Calendar.
+        Builds a CIMDateTimeAbsolute with a Calendar, which year value is over
+        the limit, fails if Exception is not thrown.</td></tr>
+        
+    <tr><td>testStringConstructor</td>
+        <td>Builds a CIMDateTimeAbsolute instance with the String constructor, than
+        checks that the getters provide good values.</td></tr>
+        
+    <tr><td>testStringConstructorNegative</td>
+        <td>Tries to build several instances by passing badly formatted values to
+        the String constructor. The testcase fails if Exception is not thrown.</td></tr>
+        
+    <tr><td>testUnsignificantYear</td>
+        <td>Builds an instance with the String constructor by passing a value where
+        the year is unsignificant. The getters are checked. Then tries to build
+        instances with badly formed unsignificant year fields and fails if
+        Exceptions are not thrown.</td></tr>
+        
+    <tr><td>testMonth</td>
+        <td>Builds an instance with the String constructor by passing value where
+        the month is unsignificant. The getters are checked. Then tries to build
+        instances with badly formed month fields and fails if Exceptions are not
+        thrown.</td></tr>
+        
+    <tr><td>testDay</td>
+        <td>Builds an instance with the String constructor by passing value where
+        the day is unsignificant. The getters are checked. Then tries to build
+        instances with badly formed day fields and fails if Exceptions are not
+        thrown.</td></tr>
+        
+    <tr><td>testHour</td>
+        <td>Builds an instance with the String constructor by passing value where
+        the hour is unsignificant. The getters are checked. Then tries to build
+        instances with badly formed hour fields and fails if Exceptions are not
+        thrown.</td></tr>
+        
+    <tr><td>testMinute</td>
+        <td>Builds an instance with the String constructor by passing value where
+        the minute is unsignificant. The getters are checked. Then tries to
+        build instances with badly formed minute fields and fails if Exceptions
+        are not thrown.</td></tr>
+    
+    <tr><td>testSec</td>
+        <td>Builds an instance with the String constructor by passing value where
+        the second is unsignificant. The getters are checked. Then tries to
+        build instances with badly second month fields and fails if Exceptions
+        are not thrown.</td></tr>
+    
+    <tr><td>testUSec</td>
+        <td>Builds an instance with the String constructor by passing value where
+        the microseconds is unsignificant. The getters are checked. Then tries
+        to build instances with badly formed microseconds fields and fails if
+        Exceptions are not thrown.</td></tr>
+    
+    <tr><td>testUTC</td>
+        <td>Does negative tests with the String constructor and badly formed UTC
+        values.</td></tr>
+    
+    <tr><td>testCompareUTC</td>
+        <td>Checks that compareTo() works for UTC.</td></tr>
+    
+    <tr><td>testCompareUSec</td>
+        <td>Checks that compareTo() works for microseconds.</td></tr>
+    
+    <tr><td>testCompareSec</td>
+        <td>Checks that compareTo() works for seconds.</td></tr>
+    
+    <tr><td>testCompareMin</td>
+        <td>Checks that compareTo() works for minutes.</td></tr>
+    
+    <tr><td>testCompareHour</td>
+        <td>Checks that compareTo() works for hours.</td></tr>
+    
+    <tr><td>testCompareDay</td>
+        <td>Checks that compareTo() works for days.</td></tr>
+        
+    <tr><td>testCompareMonth</td>
+        <td>Checks that compareTo() works for months.</td></tr>
+    
+    <tr><td>testCompareYear</td>
+        <td>Checks that compareTo() works for years.</td></tr>
+    </table>
+
+<h3>cim.CIMDateTimeIntervalTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testIntConstructor</td>
+        <td>Creates an instance with the int constructor and checks the getters.
+        Creates several instances with unsignificant fields and checks 
+        toString().
+        Checks that the int constructor throws Exception for invalid values.</td></tr>
+        
+    <tr><td>testLongConstructor</td>
+        <td>Makes an instance with the long constructor and checks the getters.
+        Negative tests are also done by calling the constructor with values
+        outside the limits.</td></tr>
+
+    <tr><td>testStrConstructor</td>
+        <td>Creates an instance with the String constructor and checks the getters.
+        Tries to make several instances with wrong String constructor
+        parameters, the testcase fails if Exception is not thrown for the wrong
+        values.</td></tr>
+    
+    <tr><td>testDays</td>
+        <td>Checks that compareTo() works for days.</td></tr>
+    
+    <tr><td>testHours</td>
+        <td>Checks that compareTo() works for hours.</td></tr>
+    
+    <tr><td>testMins</td>
+        <td>Checks that compareTo() works for minutes.</td></tr>
+    
+    <tr><td>testSecs</td>
+        <td>Checks that compareTo() works for seconds.</td></tr>
+    
+    <tr><td>testUSecs</td>
+        <td>Checks that compareTo() works for microseconds.</td></tr>
+    
+    <tr><td>testTotalMSecs</td>
+        <td>Checks that getTotalMilliseconds() works.</td></tr>
+    </table>
+
+<h3>cim.CIMInstanceDataTypeTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testDeriveInstanceProperties</td>
+        <td>Tests CIMInstance.deriveInstance.</td></tr>
+    <tr><td>testNumericKeys</td>
+        <td>Tests CIMHelper.CIMInstanceWithSynchonizedNumericKeyDataTypes.</td></tr>
+    </table> 
+    
+<h3>wbem.TrailerTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>test0SAX/PULL/DOM</td>
+        <td>Parses an HTTP CIM-XML message which contains an HTTP trailer with an
+        error message. The testcase fails if CloseableIterator.hasNext()
+        doesn't throw a RuntimeException or if the thrown RuntimeException's 
+        cause is not the expected WBEMException.</td></tr>
+    </table>
+    
+<h3>wbem.ValueTypeTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testSAX/PULL/DOM</td>
+        <td>Verifies that the types of key CIMProperties with VALUETYPE XML
+        attribute are parsed correctly.</td></tr>
+    </table>
+ 
+<h3>wbem.ModifyInstanceTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testWithPropList</td>
+        <td>Builds a modifyInstance CIM-XML request with a property list. Than
+        parses the request and checks it. </td></tr>
+    
+    <tr><td>testWithEmptyPropList</td>
+        <td>Builds a modifyInstance CIM-XML request with a empty property list. Than
+        parses the request and checks it. </td></tr>
+        
+    <tr><td>testWithNullPropList</td>
+        <td>Builds a modifyInstance CIM-XML request with a null property list. Than
+        parses the request and checks it.</td></tr> 
+    </table>
+ 
+<h3>cim.CIMObjectPathTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testEquals</td>
+        <td>Creates a bunch of strictly content equal, equal in terms of JSR48 
+            and not equal object paths. Checks if the equals method gives to 
+            correct results.</td></tr>
+    <tr><td>testEqualsModelPath</td>
+        <td>Checks if the equalsModelPath method gives the correct results for
+            two object paths with the same model path but different namespace
+            paths.</td></tr>
+    <tr><td>testConstructors</td>
+        <td>Tests the full and the WBEM-URI string constructors of CIMObjectPath.
+        	Builds CIMObjectPath instances with sample WBEM-URI fields, using both
+        	constructors, than checks that the getters of the instances provide
+        	good values.
+        	</td></tr>
+    <tr><td>testObjectPaths</td>
+        <td>Tests the WBEM-URI string constructor and toString method of
+            CIMObjectPath to make sure input matches output using both untyped
+            and typed object paths.
+        	</td></tr>    
+    </table>
+
+<h3>logging.LogAndTraceBrokerTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testInternalListeners</td>
+        <td>Tests if all three internal listeners come up correctly and that isLoggable
+            works correctly.</td></tr>
+    <tr><td>testExternalListeners</td>
+        <td>Tests if external listeners come up correctly and that isLoggable works
+            correctly.</td></tr>
+    <tr><td>testListeners</td>
+        <td>Tests if all three internal listeners and external listeners come up
+            correctly, that they can be removed successfully and that isLoggable works
+            correctly in all cases.</td></tr>
+    <tr><td>testMessage1</td>
+        <td>Tests if a log message is forwarded correctly to the log&trace listeners. 
+            This test checks the message level, locale, parameter.</td></tr>
+    <tr><td>testMessage2</td>
+        <td>Tests if a log message containing an exception is forwarded correctly to 
+            the log&trace listeners.
+            This test checks the message level, locale, exception parameter.</td></tr>
+    <tr><td>testTrace</td>
+        <td>Tests if a log message is forwarded correctly to the log&trace listeners.
+	          This test checks the message level, locale, exception parameter.</td></tr>
+    <tr><td>testCIMXMLTrace</td>
+        <td>Tests if a log message is forwarded correctly to the CIM-XML trace listeners.
+	          This test checks the message level, message and outgoing indicator.</td></tr>
+    </table>
+
+<h3>util.WBEMConfigurationTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testLoadGlobalConfiguration</td>
+        <td>Tests loadGlobalConfiguration(). First is checked if the attempt to load
+            a non-existing file fails correctly. Second an existing file is loaded
+            and the resulting change of a configuration property verified.</td></tr>
+    <tr><td>testDefault</td>
+        <td>Test fall back to defaults.</td></tr>
+    <tr><td>testOverride</td>
+        <td>Tests overriding of properties.</td></tr>
+    <tr><td>testSetAndGet</td>
+        <td>Test setter and getters.</td></tr>
+    <tr><td>testClient</td>
+        <td>Tests if the settings are picked up by the client.</td></tr>
+    </table>
+
+<h3>util.BadDoubleStringsTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testDoubleStrings</td>
+        <td>Tests Util.isBadDoubleString().</td></tr>
+    </table>
+
+<h3>http.SSLConfigurationTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testBasicConnect</td>
+        <td>Tests basic SSL connection.</td></tr>
+    <tr><td>testClientTrust</td>
+        <td>Test if the client correctly evaluates the authentication of the
+	          server.
+	          Uses four keystores: <em>keystore</em> and <em>stranger</em> contain 
+            a full private/public key each; <em>truststore</em> contains the 
+            public key from keystore; <em>notrust</em> contains an untrusted
+            certificate<br /></td></tr>
+    <tr><td>testServerTrust</td>
+        <td>Test if the server correctly evaluates the authentication of the
+	          client.
+	          Uses four keystores: <em>keystore</em> and <em>stranger</em> contain 
+            a full private/public key each; <em>truststore</em> contains the 
+            public key from keystore; <em>notrust</em> contains an untrusted
+            certificate<br /></td></tr>
+    <tr><td>testWBEMClientTrust</td>
+        <td>Similar to <em>testClientTrust</em> but uses true <em>WBEMClient</em>  
+            and <em>WBEMListener</em> instances to perform the test<br /></td></tr>
+    <tr><td>testWBEMListenerTrust</td>
+        <td>Similar to <em>testServerTrust</em> but uses true <em>WBEMClient</em>  
+            and <em>WBEMListener</em> instances to perform the test<br /></td></tr>
+    </table>
+
+<h3>cimxml.CimXmlSerializerTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testSerializer</td>
+        <td>Tests the CimXmlSerializer with a DOM document contains all kind of white
+            space and special characters.</td></tr>
+    </table>
+
+<h3>discovery.DiscovererSLPTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testFindWbemServices</td>
+        <td>Sets up a SLP SA, registers fake services and checks afterwards if these
+	          are correctly discovered by the findWBEMServices() method.</td></tr>
+    </table>
+
+<h3>discovery.WBEMServiceAdvertisementSLPTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testAdvertisement</td>
+        <td>Builds a bunch of advertisements and verifies that the getters return 
+            correct data and the createClient() method works properly.</td></tr>
+    </table>
+
+<h3>discovery.AdvertisementCatalogTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testAddAndGet</td>
+        <td>Tests addAdvertisements(), getKnownIds() and getAdvertisementsById()</td></tr>
+    <tr><td>testSelection</td>
+        <td>Tests the selection algorithm of getAdvertisement()</td></tr>
+    <tr><td>testRefresh</td>
+        <td>Tests refreshAdvertisements()</td></tr>
+    <tr><td>testListeners</td>
+        <td>Tests listener registration, deregistration and events</td></tr>
+    </table>
+
+<h3>http.HttpClientTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testCustomSocketFactory</td>
+        <td>Tests custom socket factory setting.</td></tr>
+    </table>
+
+<h3>http.HttpHeaderTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testExamineTrailer</td>
+        <td>Tests examineTrailer(). Several HTTP trailers are created and checked 
+            if the trailer exceptions are thrown only when expected and that status 
+            codes and description are correctly set in the exception.</td></tr>
+    </table>
+    
+<h3>http.HttpChallengeTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testValidChallenges</td>
+        <td>Tests Challenge.parseChallenge() with several valid challenges and checks
+            that the number of challenges along with each challenge's scheme and realm
+            are correctly set.</td></tr>
+    <tr><td>testInvalidChallenges</td>
+        <td>Tests Challenge.parseChallenge() with several invalid challenges and
+            checks if exceptions are thrown only when expected.</td></tr>
+    </table>
+
+<h3>cim.CIMOctetStringTest</h3>
+    <table border="1" cellpadding="5" cellspacing="0" width="100%">
+    <tr><td>testByteConstructorGood</td>
+        <td>Tests valid invocations of the CIMOctetString(UnsignedInteger8[])
+            constructor by examining return values from getASCIIString() and
+            getHexString().</td></tr>
+    <tr><td>testHexConstructorGood</td>
+        <td>Tests valid invocations of the CIMOctetString(String, true)
+            constructor by examining return values from getASCIIString() and
+            getBytes().</td></tr>    
+    <tr><td>testAsciiConstructorGood</td>
+        <td>Tests valid invocations of the CIMOctetString(String, false)
+            constructor by examining return values from getHexString() and
+            getBytes().</td></tr>       
+    <tr><td>testByteConstructorBad</td>
+        <td>Tests invalid invocations of the CIMOctetString(UnsignedInteger8[])
+            constructor by expecting IllegalArgumentExceptions.</td></tr> 
+    <tr><td>testHexConstructorBad</td>
+        <td>Tests invalid invocations of the CIMOctetString(String, true)
+            constructor by expecting IllegalArgumentExceptions.</td></tr> 
+    <tr><td>testAsciiConstructorBad</td>
+        <td>Tests invalid invocations of the CIMOctetString(String, false)
+            constructor by expecting IllegalArgumentExceptions.</td></tr>      
+    <tr><td>testEquals</td>
+        <td>Tests valid and invalid invocations of the equals() and hashCode()
+            methods.</td></tr>                                                       
+    </table>
+
+  </body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><head>
+<!--
+ *
+ * (C) Copyright IBM Corp. 2007, 2012
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE 
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE 
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Alexander Wolf-Reber, IBM, a.wolf-reber@de.ibm.com
+ *
+ * Change History
+ * Flag       Date        Prog         Description
+ *-------------------------------------------------------------------------------
+ * 2003590    2008-06-30  blaschke-oss Change licensing from CPL to EPL
+ * 2799260    2009-06-01  raman_arora  Fix left over @author tag from Java5 upgrade
+ * 2972697    2010-03-18  blaschke-oss Fix spelling errors in HTML files
+ * 2990370    2010-04-22  blaschke-oss Development/unittest HTML out of date
+ * 3554738    2012-08-16  blaschke-oss dump CIM xml by LogAndTraceBroker.trace()
+-->
+</head>
+<body style="background-color: white;">
+
+<h1>The Logging API</h1>
+<p>The SBLIM CIM Client for Java has a log & trace API that is extensible by application. Since the CIM client is
+always running in the context of an application it is not desired that it writes its own log files. Therefore the
+SBLIM CIM Client for Java offers listener interfaces for log & trace messages to which the application can subscribe and
+forward the messages to the application's logger.</p>
+<h2>Log & Trace</h2>
+<p>The client distinguishes between log & trace. The audience of the log is an admin at the customer site. The log is localized
+and contains only the most important messages. The messages are listed in a catalog. The audience 
+of the trace are service engineers and support people. It is not localized, but always in English and may contain the 
+most detailed trace messages desired. The trace is always a superset of the log, which means all messages sent to the log are 
+sent to the trace as well.</p>
+<p>The trace is a tool for problem determination that shouldn't be active in normal operation. Tracing at levels of FINE
+and below creates much more messages than logging. Moreover for every entry in the trace file the stack trace is analyzed
+to identify the originating method. Having full tracing active therefore will degrade performance.</p> 
+<h2>Levels</h2>
+<p>The message levels are taken from <code>java.util.logging.Level</code> (decreasing severity):</p>
+<ul><li>SEVERE</li><li>WARNING</li><li>INFO</li><li>CONFIG</li><li>FINE</li><li>FINER</li><li>FINEST</li></ul>
+<p>All messages with a Level less than CONFIG will be sent to the trace only.</p>
+<h2>Listeners</h2>
+<p>An application can register itself as a listener for log and/or trace messages. In order to do so it must implement
+the <a href="../LogListener.html"><code>LogListener</code></a> and/or <a href="../TraceListener.html"><code>TraceListener
+</code></a> interfaces and call <a href="../LogAndTraceManager.html#addLogListener(org.sblim.cimclient.LogListener)">
+<code>addLogListener()</code></a>/<a href="../LogAndTraceManager.html#addTraceListener(org.sblim.cimclient.TraceListener)">
+<code>addTraceListener()</code></a> on the <a href="../LogAndTraceManager.html"><code>LogAndTraceManager</code></a> instance.</p>
+<p>The following code snippet gives an example:</p>
+<div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+<div style="background-color: #f0f0f0; padding: 10px;">
+<pre>
+LogAndTraceManager manager = LogAndTraceManager.getManager();
+
+manager.addLogListener(new LogListener() {
+  public void log(Level pLevel, String pMessageKey, String pMessage,
+    Object[] pParameters) {
+      System.out.println("Log message "+pMessageKey+" (Level="+pLevel+"): "
+        +MessageFormat.format(pMessage, pParameters));
+  }
+});
+
+manager.addTraceListener(new TraceListener() {
+
+  public void trace(Level pLevel, StackTraceElement pOrigin, String pMessage) {
+    System.out.println("Trace message (Level="+pLevel+") from "
+      +String.valueOf(pOrigin)+": "+pMessage);
+  }
+
+  public void trace(Level pLevel, StackTraceElement pOrigin, String pMessage,
+    Throwable pThrown) {
+      System.out.println("Trace message (Level="+pLevel+") from "
+        +String.valueOf(pOrigin)+": "+pMessage);
+      pThrown.printStackTrace();
+  }
+});
+</pre></div></div>
+<p>The <code>System.out.println()</code> would of course be replaced with the API calls of the applications logger</p>
+<h2>CIM-XML Trace Listeners</h2>
+<p>An application can register itself as a listener for CIM-XML trace messages. In order to do so it must implement
+the <a href="../CIMXMLTraceListener.html"><code>CIMXMLTraceListener
+</code></a> interface and call <a href="../LogAndTraceManager.html#addCIMXMLTraceListener(org.sblim.cimclient.CIMXMLTraceListener)">
+<code>addCIMXMLTraceListener()</code></a> on the <a href="../LogAndTraceManager.html"><code>LogAndTraceManager</code></a> instance.</p>
+<p>The following code snippet gives an example:</p>
+<div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+<div style="background-color: #f0f0f0; padding: 10px;">
+<pre>
+LogAndTraceManager manager = LogAndTraceManager.getManager();
+
+manager.addCIMXMLTraceListener(new CIMXMLTraceListener() {
+
+  public void trace(Level pLevel, String pMessage, boolean pOutgoing) {
+    System.out.println("CIM-XML "+(pOutgoing ? "sent" : "received")
+      +" by client at level "+pLevel+": "+pMessage);
+  }
+});
+</pre></div></div>
+<p>The <code>System.out.println()</code> would of course be replaced with the API calls of the applications logger</p>
+<h2>Classic Logging</h2>
+<p>You say &quot;That's interesting stuff, but I just want my plain old log files back.&quot; No problem, the SBLIM 
+CIM Client for Java offers this as well. Via configuration properties you can set up classical file logging out of
+the box. See the <a href="configuration.html">configuration</a> document for details on how to set configuration properties.
+The <code>sblim-cim-client2.properties</code> file contains documentation on all properties.</p>
+<p>Note: If you want to set up the logging via <code>System.setProperty()</code> calls, make sure that this happens before
+any CIM client class is loaded by the classloader. The classic logging is set up in static initializers.</p>
+</body></html>

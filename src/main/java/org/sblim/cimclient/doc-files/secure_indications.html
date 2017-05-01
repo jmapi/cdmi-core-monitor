@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><head>
+<!--
+ *
+ * (C) Copyright IBM Corp. 2012
+ *
+ * THIS FILE IS PROVIDED UNDER THE TERMS OF THE ECLIPSE PUBLIC LICENSE
+ * ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THIS FILE
+ * CONSTITUTES RECIPIENTS ACCEPTANCE OF THE AGREEMENT.
+ *
+ * You can obtain a current copy of the Eclipse Public License from
+ * http://www.opensource.org/licenses/eclipse-1.0.php
+ *
+ * @author : Dave Heller, IBM, hellerda@us.ibm.com
+ *
+ * Change History
+ * Flag       Date        Prog         Description
+ *-------------------------------------------------------------------------------
+ * 3536398    2012-08-20  hellerda     Update HTML to reflect secure indication support
+ * 3536399    2012-08-25  hellerda     Add client/listener peer authentication properties
+-->
+</head>
+<body style="background-color: white;">
+
+<h1>Getting Started with Secure Indications</h1>
+<a href="#intro">Introduction</a><br />
+<a href="#props">Keystore Configuration Properties</a><br />
+<a href="#configs">Configurations for secure indication listener</a><br />
+<a href="#c1">"No authentication" configuration</a><br />
+<a href="#c2">"CIMOM authentication" configuration</a><br />
+<a href="#c3">"Listener authentication" configuration</a><br />
+<a href="#c4">"Mutual authentication" configuration</a><br />
+<a href="#independent">Configuring client and listener keystores independently</a><br />
+<br />
+<a id="intro" name="intro" /><h2>Introduction</h2>
+
+<p>The following text will explain how to configure a secure indication listener for the SBLIM CIM Client for Java.</p>
+<p>It is suggested the reader first review <a href="secure.html">Getting Started with Secure Connections</a>, as this document relies on the topics covered there.
+<p>As described in <a href="indications.html">Getting Started with Indications</a>, indication delivery reverses the role of of HTTP client and server. The indication  sender (typically the CIMOM) is now the HTTP client and the indication listener is the HTTP server.</p>
+<p>For SSL/TLS (HTTPS) connections, configuration of a keystore is optional for the HTTPS client. For a HTTPS server however, a keystore is mandatory.  This  is because the keystore contains the private key the server will use to initiate encryption for the connection. So we must configure a keystore to enable a secure indication listener.</p>
+<p>The keystore also contains the certificate the HTTPS server (i.e. the indication listener) will use to assert its identity. The HTTPS client (the indication sender or CIMOM) may optionally choose to verify the server cert against the contents of its own truststore. 
+
+<p>Similarly, the listener may choose to verify the certificate of the indication sender.  To do this we need to additionally configure a  truststore for the listener.</p>
+
+<a id="props" name="props" /><h2>Keystore Configuration Properties</h2>
+
+<p>SSL/TLS authentication is X509 certificate-based. Each side provides a X509 certificate that confirms its identity. The certificates are 
+exchanged and each side validates the received certificate against a local copy.</p>
+
+<p>For the listener, just as for the client, two files are used to store the certificates: a keystore and a truststore. The process for managing the keystores is described in <a href="secure.html">Getting Started with Secure Connections</a>.  The following properties allow you to configure the keystores:</p>
+
+   <ul>
+     <li><em>javax.net.ssl.keyStore</em>: The file path of the SSL keystore.</li> 
+     <li><em>javax.net.ssl.keyStoreType</em>: The type of the SSL keystore repository. Typically this is <i>JKS</i> or <i>Java KeyStore</i> type, which is the default.</li> 
+     <li><em>javax.net.ssl.keyStorePassword</em>: The password of the keystore.</li> 
+     <li><em>javax.net.ssl.trustStore</em>: The file path of the SSL truststore.</li> 
+     <li><em>javax.net.ssl.trustStoreType</em>: The type of the SSL truststore repository. Typically this is <i>JKS</i>, which is the default.
+     <li><em>javax.net.ssl.trustStorePassword</em>: The password of the truststore.</li> 
+   </ul>
+
+<p>Whenever the keystore properties are defined for the listener -- either by global configuration via the properties file or via a call to <code>System.setProperty()</code>, or set for the listener directly via a call to <code>setProperty()</code> on an instance of a listener -- the keystore will be activated automatically and no further configuration is required.</p>
+
+<p>It should be noted that, in the case where the <i>keystore</i> properties are configured globally, the <i>keystore</i> will be activated for both the client and listener simultaneously (it will in fact be enabled for all new instances of client and listener), even if this is not the intended action. This can cause the following side effect, which would be of concern only in limited circumstances:</p>
+
+<p>If you activate a <i>keystore</i> for the listener (as is required for SSL) it will be activated for the client as well, and the client will now begin to send a certificate during its SSL handshake. This would cause a change in behavior <i>only</i> if  the CIMOM is configured for optional peer verification.  If it is, and the CIMOM is unable to verify the   new client certificate, the connection would fail. To fix this you must either import the client certificate to  the CIMOM's truststore, or disable peer verification at the CIMOM. 
+
+<p>There is currently no way to control the activation of the <i>keystore</i> for client and listener independently when the properties are configured globally.  If your application absolutely requires independent control of the keystore for client and listener, it can be done programmatically as described <a href="#independent">here</a>.  For most applications this will not be required. 
+
+<p>For the <i>truststore</i>, the situation is a bit different.  An additional property is provided to control truststore activation; setting the above truststore properties alone is not sufficient to enable the truststore.  The reason for this difference is that it allows peer authentication (a.k.a. peer verification) to be controlled independently for the client and the listener via the global configuration. (This is done for the truststore and not the keystore simply because the side effects of enabling peer verification simultaneously are much more severe than enabling the keystore simultaneously.)</p>
+
+<p>To enable the truststore for the listener you must set the following property to <code>accept</code> or <code>require</code> (the default is <code>ignore</code>):</p>
+
+   <ul>
+     <li><em>sblim.wbem.sslListenerPeerVerification</em>: Determines how a HTTPS listener will handle authentication of a client (i.e. indication sender). If set to ignore, no SSL authentication (peer verification) will be performed. If set to require, the listener will attempt to verify the server certificate against the contents of the truststore defined in &quot;javax.net.ssl.trustStore&quot; and will fail the connection if the certificate cannot be verified.  If set to accept, the listener will request the sender to present a certificate, but will not fail the connection even if an untrusted certificate is presented (this setting is of little practical value).</li>
+   </ul>
+
+<p>If the truststore properties are set but <code>sslListenerPeerVerification</code> is <code>ignore</code>, the truststore is not activated and all connections will be allowed (i.e. every sender is trusted). The only real use of this configuration is to temporarily disable the truststore for testing.  Conversely, if <code>sslListenerPeerVerification</code> is <code>require</code> but the truststore properties are not set (or the truststore file is missing or otherwise unreadable), no connections will be allowed (i.e. no sender is trusted), as this is considered to be a misconfiguration.  In both cases, a WARNING message is sent to the logger. (Note: <code>sslListenerPeerVerification=accept</code> behaves like <code>require</code> but the connection will not actually fail in this case.)</p>
+
+<p>As mentioned above, there is a way to set the keystore or truststore properties independently for client and listener, and in this manner it is possible to configure a separate set of keystores for each. However, this cannot be done via the properties file; it can only be done programmatically.  This is described <a href="#independent">here</a>.</p>
+
+<a id="configs" name="configs" /><h2>Configurations for secure indication listener</h2>
+
+<p>The table below shows the possible keystore configurations for the listener. Note we refer to the CIMOM in its capacity as indication sender, not server.</p>
+<table border="1" cellpadding="5">
+   <tr><th>Configuration</th><th>Encryption/Hashing</th><th>CIMOM authenticated</th><th>Listener authenticated</th><th>Side effect <b/>if configured globally</th></tr>
+   <tr align="center"><td><a href="#c1">No authentication</a></td><td>yes</td><td>no</td><td>no</td><td>client now sends cert</td></tr>
+   <tr align="center"><td><a href="#c2">CIMOM authentication</a></td><td>yes</td><td>yes</td><td>no</td><td>none</td></tr>
+   <tr align="center"><td><a href="#c3">Listener authentication</a></td><td>yes</td><td>no</td><td>yes</td><td>client now sends cert</td></tr>
+   <tr align="center"><td><a href="#c4">Mutual authentication</a></td><td>yes</td><td>yes</td><td>yes</td><td>client now  sends cert</td></tr>
+</table>   
+
+<a id="c1" name="c1" /><h2>"No authentication" configuration</h2>
+<ul>
+    <li>Confidentiality: given</li>
+    <li>Integrity: given</li>
+    <li>Authentication: no</li>
+    <li>Keystore: always required</li>
+    <li>Truststore: No</li>
+</ul>
+
+<p>As previously stated we must <i>always</i> configure a keystore to enable a secure listener. Follow the procedure here to <a href="secure.html#keystore">create a keystore</a> and set the appropriate configuration properties. Once this is done the keystore will be activated and the listener will be capable of receiving secure indications.</p>
+
+<p>The process for creating a new indication listener is described <a href="indications.html#setup">here</a>. The sample code supports either a http or https listener. Don't forget to change "http" to "https" in the CIM_ListenerDestinationCIMXML instance when creating a secure subscription.</p>
+
+<p>Note: The indication sender CIMOM (i.e. the indication sender) may be configured to send its own X509 certificate. In this scenario we decided not to evaluate this certificate..</p> 
+
+<p>Note: Because the listener acts as a HTTPS server it will always present its certificate to the client (the indication sender or CIMOM). The CIMOM is free to verify the listener cert if desired. See your CIMOM documentation to determine if this feature is available.  If so, the configuration will likely involve importing the listener certificate into the CIMOM truststore. See <a href="secure.html#export">exporting a certificate</a> for a description on how to export a certificate from your keystore so that you can import it into the CIMOM's truststore.</p>
+
+<p>Note also: if the keystore properties are configured globally the keystore will be activated for (Java CIM) client as well as the listener.  This can cause the side effect described in <a href="#props">configuration properties</a> above, which in most cases it is not of concern.  If your application absolutely requires an independent keystore configuration this can be done programmatically as described <a href="#independent">below</a></p>
+
+<a id="c2" name="c2" /><h2>"CIMOM authentication" configuration</h2>
+<ul>
+    <li>Confidentiality: given</li>
+    <li>Integrity: given</li>
+    <li>Authentication: CIMOM only</li>
+    <li>Keystore: always required</li>
+    <li>Truststore: required</li>
+</ul>
+<p>In this scenario we configure the listener to check the identity of the CIMOM (i.e. the indication sender). To do this we need to <a href="secure.html#truststore">create a truststore</a> and  the appropriate configuration properties described above.  When <code>sslListenerPeerVerification</code> is set to <code>accept</code> or <code>require</code>, the truststore will be activated and the listener will automatically check the CIMOM certificate against the contents. Everything else is equal to the "no authorization" configuration</p>
+
+<p>Note: In this scenario we will check  the CIMOM's X509 certificate. In order to do that we have to
+import the CIMOM's certificate into our truststore. See <a href="secure.html#import">importing a certificate</a> for 
+details.</p>
+
+<p>Note: Because the listener acts as a HTTPS server it will always present its certificate to the client (the indication sender or CIMOM). The CIMOM is free to verify the listener cert if desired.</p>
+
+<p>Note also: even when the truststore properties are configured globally they are activated separately for client and listener via the <code>sslClientPeerVerification</code> and <code>sslListenerPeerVerification</code> properties. This is done to prevent any side effect from enabling them simultaneously.</p>
+
+<a id="c3" name="c3" /><h2>"Listener authentication" configuration</h2>
+<ul>
+    <li>Confidentiality: given</li>
+    <li>Integrity: given</li>
+    <li>Authentication: listener only</li>
+    <li>Keystore: always required</li>
+    <li>Truststore: no</li>
+</ul>
+<p>In this scenario we configure the CIMOM (i.e. the indication sender) to check the identity of the listener. As previously stated, the listener will <i>always</i> present its certificate to the indication sender, so there is no further configuration required on the listener side. All that is required  is to enable listener verification at your CIMOM. See your CIMOM documentation to determine if this feature is available.  If so, the configuration will likely involve importing the listener certificate into the CIMOM truststore. See <a href="secure.html#export">exporting a certificate</a> for a description on how to export a certificate from your keystore so that you can import it into the CIMOM's truststore.</p>
+
+<p>Note: In this scenario we decided not to evaluate the CIMOM's X509 certificate. The listener can be configured to do that as described above.</p>
+
+<p>Note also: if the keystore properties are configured globally the keystore will be activated for (Java CIM) client as well as the listener.  This can cause the side effect described in <a href="#props">configuration properties</a> above, which in most cases it is not of concern.  If your application absolutely requires an independent keystore configuration this can be done programmatically as described <a href="#independent">below</a></p>
+
+<a id="c4" name="c4" /><h2>"Mutual authentication" configuration</h2>
+<ul>
+    <li>Confidentiality: given</li>
+    <li>Integrity: given</li>
+    <li>Authentication: listener and CIMOM</li>
+    <li>Keystore: always required</li>
+    <li>Truststore: required</li>
+</ul>
+
+<p>In this scenario we configure certificate validation in both directions simultaneously.</p>
+
+<p>In short, this configuration comprises the &quot;CIMOM authentication&quot; and &quot;Listener authentication&quot; together.</p>
+
+<p>Remember, if the keystore or truststore properties are configured globally, the keystore or truststore will be activated for the client as well as the listener. If this is not your intent you must set the keystore configurations independently.</p>
+
+<a id="#independent" name="independent" />
+<h2>Configuring client and listener keystores independently</h2>
+
+<p>While it is not possible to configure client and listener keystores independently via the global configuration, it is possible to do so programmatically, by setting the desired property on the client or listener object directly, using the object's <code>setProperty()</code> method. In the case of the client this must be done after obtaining a reference to the client object but before the call to <code>initialize()</code>.  For the listener it is done after obtaining the listener object but before the call to <code>addlistener()</code>.</p>
+
+<p>The ability to configure client and listener keystores independently has two basic applications:</p>
+
+<ol>
+    <li><u>It allows the use of separate keystore/truststore files for client and listener</u>. For most applications this should not be necessary.  Understand that sharing a truststore between client and listener does not mean you are limited to a single CA certificate for both, since a truststore can contain more than one certificate. The same is not exactly true for the keystore:  While a keystore can contain more than one key pair, the Java CIM Client's KeyManager will use the first acceptable key pair it finds in the keystore in order to complete the SSL handshake.  So there is no simple way to make the client use one key pair and the listener use another. If your application requires this you must separate the client and listener keystores. The circumstances where this is required would be unusual, since it is most common in a public key infrastructure to assign a single indentity to an endpoint, and this technique would actually assign two identities to the endpoint. Nevertheless it is supported.
+    <li><u>It allows the keystore to be enabled separately for client and listener</u>.  When the keystore is configured globally it is automatically enabled for both client and listener even if this is not the intent. Configuring the keystore independently allows its activation to be controlled independently as well, since any property set on the client or listener directly will override the global value of that property.  So there are two strategies here: you can either forego setting the keystore properties globally and set them only on the client or listener as required; or, you can force keystore activation off for client or listener by setting the keystore path to an empty string. The latter is recommended as it ensures it will not be inadvertently enabled if the global configuration is later modified.  The circumstances where this required would be unusual, e.g. it is necessary to hide the identity of the client even when a SSL listener is enabled.
+</ol>
+
+<p>For the client, using the code snippet in <a href="firststeps.html">First Steps</a> as a reference: to configure a keystore for use solely by the client, insert the following lines after the call to <code>getClient()</code> but before the call to <code>client.initialize()</code>:</p>
+<div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+<div style="background-color: #f0f0f0; padding: 3px;"><pre>
+client.setProperty(WBEMConfigurationProperties.KEYSTORE_PATH, "/path/to/client/keystore.pks");
+client.setProperty(WBEMConfigurationProperties.KEYSTORE_PASSWORD, "password");
+</pre></div></div>
+
+<p>To disable the keystore for the client:</p>
+
+<div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+<div style="background-color: #f0f0f0; padding: 3px;"><pre>
+client.setProperty(WBEMConfigurationProperties.KEYSTORE_PATH, "");
+</pre></div></div>
+
+<p>For the listener, using the code snippet in <a href="indications.html#setup">Setting up an indication listener</a> as a reference: to configure a keystore for use solely by the listener, insert the following lines after the call to <code>getListener()</code> but before the call to <code>listener.addListener()</code>:</p>
+
+<div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+<div style="background-color: #f0f0f0; padding: 3px;"><pre>
+listener.setProperty(WBEMConfigurationProperties.KEYSTORE_PATH, "/path/to/listener/keystore.pks");
+listener.setProperty(WBEMConfigurationProperties.KEYSTORE_PASSWORD, "password");
+</pre></div></div>
+
+<p>To disable the keystore for the listener (preventing the use SSL indications):</p>
+
+<div style="border: 1px dashed #3c78b5; font-size: 14px; font-family: Courier; margin: 10px; line-height: 17px;">
+<div style="background-color: #f0f0f0; padding: 3px;"><pre>
+listener.setProperty(WBEMConfigurationProperties.KEYSTORE_PATH, "");
+</pre></div></div>
+
+<p>Finally, note it is also possible to control the listener configuration by creating a new <code>java.lang.Properties</code> object and passing it to <code>addListener()</code>, as shown in the example <a href="indications.html#example2">here</a>. The result will be the same as the example above. If for some reason both methods are used, the properties passed to <code>addListener()</code> will take precedence.</p>
+
+</body></html>
